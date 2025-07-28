@@ -1,0 +1,651 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Base values that can be adjusted by responsive CSS */
+  --font-size: 14px;
+  --font-size-mobile: 13px;
+  --font-size-tablet: 14px;
+  --font-size-desktop: 15px;
+
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --radius: 0.875rem;
+
+  /* Responsive padding and spacing */
+  --container-padding: 1rem;
+  --container-padding-sm: 1.5rem;
+  --container-padding-md: 2rem;
+  --section-spacing: 4rem;
+  --section-spacing-sm: 3rem;
+  --section-spacing-md: 5rem;
+  --section-spacing-lg: 6rem;
+
+  /* Safe area insets for notched devices */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+}
+
+/* Dark mode values - from Figma design */
+:root {
+  --background: #080f17; /* Dark navy from Figma */
+  --foreground: #d6dde6; /* Light gray from Figma */
+  --card: #1e1e1e; /* Darker card background */
+  --card-foreground: #d6dde6;
+  --popover: #1e1e1e;
+  --popover-foreground: #d6dde6;
+
+  /* Primary colors */
+  --primary: #22c55e; /* Darker green - more readable and less bright */
+  --primary-foreground: #ffffff; /* White for contrast */
+  --primary-hover: #16a34a; /* Darker for hover */
+  --primary-active: #15803d; /* Even darker for active state */
+
+  /* Secondary colors */
+  --secondary: #a7ee43; /* Secondary Lime Green variation */
+  --secondary-foreground: #080f17;
+  --secondary-hover: #95d838; /* Darker for hover */
+
+  /* Tertiary and accent colors */
+  --tertiary: #8A4FFF; /* Warm Purple */
+  --tertiary-foreground: #ffffff;
+  --tertiary-hover: #7a3afd; /* Darker purple for hover */
+
+  /* UI elements */
+  --muted: rgba(214, 221, 230, 0.1); /* Subtle muted background */
+  --muted-foreground: rgba(214, 221, 230, 0.62); /* From Figma design */
+  --accent: rgba(255, 255, 255, 0.04); /* From Figma design */
+  --accent-foreground: #d6dde6;
+
+  /* Status colors */
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --destructive-hover: #b9142f; /* Darker red for hover */
+
+  --success: #22c55e; /* Green for success states */
+  --success-foreground: #080f17;
+
+  --warning: #fbbf24; /* Amber for warnings */
+  --warning-foreground: #080f17;
+
+  /* Borders and inputs */
+  --border: rgba(214, 221, 230, 0.2); /* From Figma design */
+  --input: transparent;
+  --input-background: rgba(255, 255, 255, 0.04);
+  --input-border: rgba(214, 221, 230, 0.2);
+  --input-foreground: #d6dde6; /* Light text color for input */
+  --input-placeholder: rgba(214, 221, 230, 0.4); /* Lighter color for placeholder */
+  --input-focus: #c1f17e; /* Primary color for focus */
+  --switch-background: rgba(214, 221, 230, 0.2);
+  --ring: #c1f17e; /* Lime Green focus ring */
+
+  /* Charts */
+  --chart-1: #c1f17e; /* Lime Green */
+  --chart-2: #a7ee43; /* Secondary Lime */
+  --chart-3: #8A4FFF; /* Warm Purple */
+  --chart-4: #FF6B00; /* Complementary Orange */
+  --chart-5: #0066FF; /* Electric Blue */
+
+  /* Sidebar */
+  --sidebar: #1e1e1e;
+  --sidebar-foreground: #d6dde6;
+  --sidebar-primary: #c1f17e;
+  --sidebar-primary-foreground: #080f17;
+  --sidebar-accent: rgba(255, 255, 255, 0.04);
+  --sidebar-accent-foreground: #d6dde6;
+  --sidebar-border: rgba(214, 221, 230, 0.2);
+  --sidebar-ring: #c1f17e;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7);
+
+  /* Special effects */
+  --glow-primary: 0 0 15px rgba(193, 241, 126, 0.6);
+  --glow-secondary: 0 0 15px rgba(167, 238, 67, 0.6);
+  --glow-tertiary: 0 0 15px rgba(138, 79, 255, 0.6);
+}
+
+@layer base {
+  /* Move theme variables here */
+  :root {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-tertiary: var(--tertiary);
+    --color-tertiary-foreground: var(--tertiary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-input-background: var(--input-background);
+    --color-switch-background: var(--switch-background);
+    --color-ring: var(--ring);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+  }
+}
+
+/* Replace @custom-variant with proper Tailwind dark mode syntax */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark mode variables */
+    --background: #080f17; /* Dark navy from Figma */
+    --foreground: #d6dde6; /* Light gray from Figma */
+    --card: #1e1e1e; /* Darker card background */
+    --card-foreground: #d6dde6;
+    --popover: #1e1e1e;
+    --popover-foreground: #d6dde6;
+
+    /* Primary colors */
+    --primary: #22c55e; /* Darker green - more readable and less bright */
+    --primary-foreground: #ffffff; /* White for contrast */
+    --primary-hover: #16a34a; /* Darker for hover */
+    --primary-active: #15803d; /* Even darker for active state */
+
+    /* Secondary colors */
+    --secondary: #a7ee43; /* Secondary Lime Green variation */
+    --secondary-foreground: #080f17;
+    --secondary-hover: #95d838; /* Darker for hover */
+
+    /* Tertiary and accent colors */
+    --tertiary: #8A4FFF; /* Warm Purple */
+    --tertiary-foreground: #ffffff;
+    --tertiary-hover: #7a3afd; /* Darker purple for hover */
+
+    /* UI elements */
+    --muted: rgba(214, 221, 230, 0.1); /* Subtle muted background */
+    --muted-foreground: rgba(214, 221, 230, 0.62); /* From Figma design */
+    --accent: rgba(255, 255, 255, 0.04); /* From Figma design */
+    --accent-foreground: #d6dde6;
+
+    /* Status colors */
+    --destructive: #d4183d;
+    --destructive-foreground: #ffffff;
+    --destructive-hover: #b9142f; /* Darker red for hover */
+
+    --success: #22c55e; /* Green for success states */
+    --success-foreground: #080f17;
+
+    --warning: #fbbf24; /* Amber for warnings */
+    --warning-foreground: #080f17;
+
+    /* Borders and inputs */
+    --border: rgba(214, 221, 230, 0.2); /* From Figma design */
+    --input: transparent;
+    --input-background: rgba(255, 255, 255, 0.04);
+    --input-border: rgba(214, 221, 230, 0.2);
+    --input-foreground: #d6dde6; /* Light text color for input */
+    --input-placeholder: rgba(214, 221, 230, 0.4); /* Lighter color for placeholder */
+    --input-focus: #c1f17e; /* Primary color for focus */
+    --switch-background: rgba(214, 221, 230, 0.2);
+    --ring: #c1f17e; /* Lime Green focus ring */
+
+    /* Charts */
+    --chart-1: #c1f17e; /* Lime Green */
+    --chart-2: #a7ee43; /* Secondary Lime */
+    --chart-3: #8A4FFF; /* Warm Purple */
+    --chart-4: #FF6B00; /* Complementary Orange */
+    --chart-5: #0066FF; /* Electric Blue */
+
+    /* Sidebar */
+    --sidebar: #1e1e1e;
+    --sidebar-foreground: #d6dde6;
+    --sidebar-primary: #c1f17e;
+    --sidebar-primary-foreground: #080f17;
+    --sidebar-accent: rgba(255, 255, 255, 0.04);
+    --sidebar-accent-foreground: #d6dde6;
+    --sidebar-border: rgba(214, 221, 230, 0.2);
+    --sidebar-ring: #c1f17e;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7);
+
+    /* Special effects */
+    --glow-primary: 0 0 15px rgba(193, 241, 126, 0.6);
+    --glow-secondary: 0 0 15px rgba(167, 238, 67, 0.6);
+    --glow-tertiary: 0 0 15px rgba(138, 79, 255, 0.6);
+  }
+}
+
+/* Header specific styling */
+header {
+  background: var(--background);
+  color: white;
+}
+
+header button.text-foreground,
+header button.text-foreground\/80 {
+  color: white;
+}
+
+header button:hover.text-foreground\/80 {
+  color: var(--primary);
+}
+
+/* Base styles */
+@layer base {
+  .base-styles {
+    @apply border-border outline-ring;
+  }
+
+  body {
+    @apply bg-background text-foreground font-['Plus_Jakarta_Sans',_sans-serif];
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Focus styles */
+  *:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px rgba(193, 241, 126, 0.3);
+  }
+
+  /* Selection styles */
+  ::selection {
+    background-color: rgba(193, 241, 126, 0.3);
+    color: var(--foreground);
+  }
+
+  input, textarea {
+    @apply bg-input text-input-foreground border-input-border;
+    &::placeholder {
+      color: var(--input-placeholder);
+    }
+  }
+}
+
+/* Typography - with responsive sizes */
+@layer base {
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.32px;
+
+    @media (min-width: 640px) {
+      font-size: 40px;
+      letter-spacing: -0.4px;
+    }
+
+    @media (min-width: 768px) {
+      font-size: 48px;
+      letter-spacing: -0.48px;
+    }
+  }
+
+  h2 {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.26px;
+
+    @media (min-width: 640px) {
+      font-size: 30px;
+      letter-spacing: -0.3px;
+    }
+
+    @media (min-width: 768px) {
+      font-size: 34px;
+      letter-spacing: -0.34px;
+    }
+  }
+
+  h3 {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.22px;
+
+    @media (min-width: 640px) {
+      font-size: 24px;
+      letter-spacing: -0.24px;
+    }
+
+    @media (min-width: 768px) {
+      font-size: 28px;
+      letter-spacing: -0.28px;
+    }
+  }
+
+  h4 {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.2;
+
+    @media (min-width: 768px) {
+      font-size: 20px;
+    }
+  }
+
+  p {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+
+    @media (min-width: 768px) {
+      font-size: 15px;
+    }
+  }
+
+  label {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+
+    @media (min-width: 768px) {
+      font-size: 15px;
+    }
+  }
+
+  button {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+
+    @media (min-width: 768px) {
+      font-size: 15px;
+    }
+  }
+
+  input {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+
+    @media (min-width: 768px) {
+      font-size: 15px;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size-mobile);
+
+  @media (min-width: 640px) {
+    font-size: var(--font-size-tablet);
+  }
+
+  @media (min-width: 1024px) {
+    font-size: var(--font-size-desktop);
+  }
+
+  /* Add smooth scrolling for better UX */
+  scroll-behavior: smooth;
+
+  /* Prevent content shifting on scrollbar appearance */
+  scrollbar-gutter: stable;
+
+  /* Enable momentum scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Theme transition */
+.theme-transition {
+  transition: background-color 0.3s ease,
+              color 0.3s ease,
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
+}
+
+/* Custom utilities */
+.gradient-bg {
+  background-image: radial-gradient(
+    circle at center,
+    rgba(162, 210, 96, 0.06) 0%,
+    rgba(47, 64, 41, 0.765) 65%,
+    rgba(27, 39, 32, 0.8825) 80%,
+    rgba(8, 15, 23, 1) 100%
+  );
+}
+
+.hero-gradient {
+  background: linear-gradient(
+    135deg,
+    rgba(193, 241, 126, 0.05) 0%,
+    rgba(167, 238, 67, 0.07) 50%,
+    rgba(138, 79, 255, 0.05) 100%
+  );
+}
+
+/* Space theme styles */
+.space-bg {
+  background-color: #080f17;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(167, 238, 67, 0.03) 0%, transparent 20%),
+    radial-gradient(circle at 90% 80%, rgba(138, 79, 255, 0.03) 0%, transparent 20%);
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background-color: white;
+  animation: twinkle var(--duration, 3s) infinite ease-in-out;
+}
+
+.startup-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.startup-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px -10px rgba(167, 238, 67, 0.1);
+}
+
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+}
+
+.cta-button {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+  border-radius: var(--radius);
+  padding: 12px 24px;
+  transition: all 0.2s ease;
+}
+
+.cta-button:hover {
+  transform: translateY(-2px);
+  background-color: var(--primary-hover);
+  box-shadow: 0 4px 12px rgba(193, 241, 126, 0.4);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+
+  @media (min-width: 768px) {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(214, 221, 230, 0.3);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(214, 221, 230, 0.4);
+}
+
+/* Responsive spacing utilities */
+.responsive-container {
+  width: 100%;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+  margin-left: auto;
+  margin-right: auto;
+
+  @media (min-width: 640px) {
+    padding-left: var(--container-padding-sm);
+    padding-right: var(--container-padding-sm);
+    max-width: 640px;
+  }
+
+  @media (min-width: 768px) {
+    max-width: 768px;
+  }
+
+  @media (min-width: 1024px) {
+    padding-left: var(--container-padding-md);
+    padding-right: var(--container-padding-md);
+    max-width: 1024px;
+  }
+
+  @media (min-width: 1280px) {
+    max-width: 1280px;
+  }
+}
+
+/* Safe area utilities for notched devices */
+.safe-area-pt {
+  padding-top: calc(1rem + var(--safe-area-inset-top));
+}
+
+.safe-area-pb {
+  padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
+}
+
+.safe-area-inset-bottom {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+/* Mobile-specific fixes */
+@media (max-width: 640px) {
+  .mobile-pt-0 {
+    padding-top: 0 !important;
+  }
+
+  .mobile-pb-0 {
+    padding-bottom: 0 !important;
+  }
+
+  .mobile-mt-0 {
+    margin-top: 0 !important;
+  }
+
+  .mobile-mb-0 {
+    margin-bottom: 0 !important;
+  }
+
+  .mobile-px-4 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .mobile-py-4 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .mobile-gap-4 {
+    gap: 1rem !important;
+  }
+
+  .mobile-text-center {
+    text-align: center !important;
+  }
+
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .mobile-flex-col {
+    flex-direction: column !important;
+  }
+}
+
+/* iOS Safari specific fixes */
+.ios-safari {
+  /* Fix for 100vh issue in iOS Safari */
+  .min-h-screen {
+    min-height: calc(var(--vh, 1vh) * 100);
+  }
+
+  /* Add padding to bottom content to account for safari toolbar */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  /* Fix for position:fixed elements */
+  .ios-fixed {
+    position: fixed;
+    width: 100%;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+}
+
+/* Responsive height utilities using the custom --vh variable */
+.h-screen-dynamic {
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+.min-h-screen-dynamic {
+  min-height: calc(var(--vh, 1vh) * 100);
+}
+
+/* Responsive max-height utility for modals */
+.max-h-screen-dynamic {
+  max-height: calc(var(--vh, 1vh) * 100 - 40px);
+}

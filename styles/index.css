@@ -1,0 +1,41 @@
+/* Import global styles */
+@import './globals.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #080f17;
+    --foreground: #d6dde6;
+    
+    --input: transparent;
+    --input-background: rgba(255, 255, 255, 0.04);
+    --input-border: rgba(214, 221, 230, 0.2);
+    --input-foreground: #d6dde6;
+  }
+}
+
+@layer components {
+  .input-base {
+    @apply bg-transparent border border-input-border text-input-foreground;
+  }
+}
+
+@layer utilities {
+  .outline-ring {
+    outline-color: theme('colors.outline-ring');
+  }
+}
+
+/* Additional global styles */
+html, body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}

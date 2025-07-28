@@ -1,0 +1,100 @@
+/*************  ✨ Windsurf Command ⭐  *************/
+model Customer {
+  id       String   @id @default(cuid())
+  name     String
+  email    String   @unique
+  password String
+  role     Role     @default(Customer)
+  products Product[]
+}
+
+model Product {
+  id         String   @id @default(cuid())
+  name       String
+  price      Decimal
+  type       ProductType
+  category   Category?
+  inventory  Int      @default(0)
+  image      String?
+  description String?
+  customers  Customer[]
+}
+
+model Category {
+  id    String   @id @default(cuid())
+  name  String
+  products Product[]
+}
+
+model SubscriptionPlan {
+  id         String   @id @default(cuid())
+  name       String
+  price      Decimal
+  currency   Currency
+  interval   Interval
+  trialDays  Int?
+  products   Product[]
+}
+
+model Order {
+  id             String   @id @default(cuid())
+  customer       Customer @relation(fields: [customerId], references: [id])
+  customerId     String
+  subscriptionId String?
+  subscription   SubscriptionPlan? @relation(fields: [subscriptionId], references: [id])
+  products       Product[]
+  status         OrderStatus @default(Pending)
+  createdAt      DateTime   @default(now())
+  total          Decimal
+}
+
+model Invoice {
+  id         String   @id @default(cuid())
+  orderId    String   @relation(fields: [orderId], references: [id])
+  order      Order    @relation(fields: [orderId], references: [id])
+  customerId String   @relation(fields: [customerId], references: [id])
+  customer   Customer @relation(fields: [customerId], references: [id])
+  amount     Decimal
+  status     InvoiceStatus @default(Pending)
+  createdAt  DateTime   @default(now())
+}
+
+enum Role {
+  Customer
+  Admin
+}
+
+enum ProductType {
+  Physical
+  Digital
+  Subscription
+}
+
+enum Interval {
+  Day
+  Week
+  Month
+  Year
+}
+
+enum Currency {
+  USD
+  EUR
+  JPY
+  CNY
+}
+
+enum OrderStatus {
+  Pending
+  Shipped
+  Delivered
+  Canceled
+  Refunded
+}
+
+enum InvoiceStatus {
+  Pending
+  Paid
+  Refunded
+}
+/*******  b547af3b-fb4c-44d3-bd8f-7137a61190a7  *******/

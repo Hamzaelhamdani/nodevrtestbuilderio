@@ -1,0 +1,14 @@
+# www.robotstxt.org/
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://venturesroom.com/sitemap.xml
+
+# Search engines should not index these paths
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin-portal/
+Disallow: /admin/
+Disallow: /auth/

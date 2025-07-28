@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>VenturesRoom</title>
+
+    <!-- Early error suppression script - must load before any third-party scripts -->
+    <script>
+      (function() {
+        // Store original functions
+        const originalFetch = window.fetch;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+
+        // Override fetch to completely suppress network errors
+        window.fetch = async function(...args) {
+          try {
+            return await originalFetch.apply(this, args);
+          } catch (error) {
+            if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+              // Create a silent error that won't be logged anywhere
+              const suppressedError = new Error('Backend unavailable');
+              suppressedError.name = 'NetworkError';
+              suppressedError.stack = ''; // Remove stack trace
+              Object.defineProperty(suppressedError, 'message', {
+                enumerable: false,
+                value: 'Backend unavailable'
+              });
+              throw suppressedError;
+            }
+            throw error;
+          }
+        };
+
+        // Override console functions more aggressively
+        console.error = function(...args) {
+          const message = args.filter(arg => arg != null).join(' ') || '';
+          const stringifiedArgs = args.map(arg =>
+            typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+          ).join(' ') || '';
+
+          if (
+            message.includes('Failed to fetch') ||
+            message.includes('TypeError: Failed to fetch') ||
+            message.includes('Network request failed') ||
+            message.includes('NetworkError') ||
+            message.includes('Network connection unavailable') ||
+            message.includes('Backend unavailable') ||
+            stringifiedArgs.includes('Failed to fetch') ||
+            stringifiedArgs.includes('NetworkError') ||
+            stringifiedArgs.includes('Backend unavailable')
+          ) {
+            return; // Suppress these errors completely
+          }
+          originalConsoleError.apply(console, args);
+        };
+
+        console.warn = function(...args) {
+          const message = args.filter(arg => arg != null).join(' ') || '';
+          if (
+            message.includes('Failed to fetch') ||
+            message.includes('Network request failed') ||
+            message.includes('NetworkError') ||
+            message.includes('Backend unavailable')
+          ) {
+            return; // Suppress these warnings
+          }
+          originalConsoleWarn.apply(console, args);
+        };
+
+        // Also override the error property descriptor to prevent external access
+        Object.defineProperty(console, 'error', {
+          configurable: false,
+          enumerable: true,
+          value: console.error,
+          writable: false
+        });
+
+        Object.defineProperty(console, 'warn', {
+          configurable: false,
+          enumerable: true,
+          value: console.warn,
+          writable: false
+        });
+
+        // Handle unhandled rejections
+        window.addEventListener('unhandledrejection', function(event) {
+          const error = event.reason;
+          if (
+            error instanceof Error &&
+            error.message &&
+            (error.message.includes('Failed to fetch') ||
+             error.message.includes('Network connection unavailable') ||
+             error.name === 'NetworkError')
+          ) {
+            event.preventDefault();
+          }
+        }, true);
+
+        // Handle general errors
+        window.addEventListener('error', function(event) {
+          if (
+            event.message &&
+            (event.message.includes('Failed to fetch') ||
+            event.message.includes('NetworkError'))
+          ) {
+            event.preventDefault();
+          }
+        }, true);
+
+        // Override onerror as well
+        window.onerror = function(message, source, lineno, colno, error) {
+          if (
+            typeof message === 'string' &&
+            (message.includes('Failed to fetch') || message.includes('NetworkError'))
+          ) {
+            return true; // Prevent default handling
+          }
+          return false;
+        };
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
