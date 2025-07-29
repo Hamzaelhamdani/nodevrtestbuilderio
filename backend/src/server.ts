@@ -1,36 +1,53 @@
+// backend/src/server.ts
 import express from 'express';
 import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes.ts';
 import cors from 'cors';
+
+import authRoutes from './routes/authRoutes.js';
+import meRoute from './routes/meRoute.js';
+import startupRoutes from './routes/startupRoutes.js';
+import structureRoutes from './routes/structureRoutes.js';
+import { authenticateToken } from './middleware/authMiddleware.js';
 
 dotenv.config();
 
-const app = express(); // ✅ d'abord créer l'app
+const app = express();
 
-// ✅ ensuite activer CORS
+// ✅ Activer CORS pour le frontend
 app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true
 }));
 
+// ✅ Parser le JSON
 app.use(express.json());
+
+// ——— Routes Auth ———
+// Inscription & connexion
 app.use('/api/auth', authRoutes);
 
-console.log("✅ authRoutes chargé avec succès");
-console.log("✅ Environnement chargé, lancement du serveur...");
+// Récupérer le user courant via JWT
+app.use('/api/auth/me', authenticateToken, meRoute);
 
-app.get('/', (_, res) => {
+// ——— Autres Routes ———
+// Liste des startups (publique ou protégée selon besoin)
+app.use('/api/startups', startupRoutes);
+
+// Liste des support structures
+app.use('/api/structures', structureRoutes);
+
+console.log('✅ Routes chargées avec succès');
+console.log('✅ Environnement chargé, lancement du serveur...');
+
+// Health check
+app.get('/', (_req, res) => {
   res.send('VenturesRoom backend is running ✅');
 });
 
-const PORT = process.env.PORT || 5000;
-
-try {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server is running on http://localhost:${PORT}`);
-  }).on('error', (err) => {
-    console.error('❌ Erreur au lancement du serveur :', err);
-  });
-} catch (err) {
-  console.error('❌ Exception globale capturée :', err);
-}
+// Démarrage
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+}).on('error', (err) => {
+  console.error('❌ Erreur au lancement du serveur :', err);
+});

@@ -4,7 +4,107 @@
 
 (Add a brief description of your project here: What it does, its purpose, etc.)
 
-## Technologies Used
+## Ventures Room Platform
+
+This repository contains both the backend (Node.js, Express, Prisma, PostgreSQL) and frontend (React, Vite, TypeScript, TailwindCSS) for the Ventures Room platform.
+
+---
+
+## Project Structure (Arborescence)
+
+```
+nodevrtestbuilderio/
+│
+├── backend/
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── prisma/
+│   │   └── schema.prisma
+│   ├── scripts/
+│   │   └── seedUsers.ts
+│   ├── src/
+│   │   ├── server.ts
+│   │   ├── controllers/
+│   │   │   ├── authController.ts
+│   │   │   └── productController.ts
+│   │   ├── middleware/
+│   │   │   └── authMiddleware.ts
+│   │   ├── prisma/
+│   │   │   └── client.ts
+│   │   ├── routes/
+│   │   │   ├── authRoutes.ts
+│   │   │   └── productRoutes.ts
+│   │   └── utils/
+│   │       ├── hash.ts
+│   │       └── jwt.ts
+│   └── ...
+│
+├── src/ (frontend)
+│   ├── App.tsx
+│   ├── main.tsx
+│   ├── components/
+│   ├── contexts/
+│   ├── services/
+│   ├── types/
+│   ├── utils/
+│   └── ...
+│
+├── public/
+├── styles/
+├── package.json
+├── vite.config.ts
+└── ...
+```
+
+---
+
+## Backend
+
+- **Tech Stack:** Node.js, Express, TypeScript, Prisma ORM, PostgreSQL
+- **Location:** `backend/`
+- **Key Files:**
+  - `server.ts`: Main server entry point
+  - `prisma/schema.prisma`: Database schema
+  - `controllers/`, `routes/`, `middleware/`, `utils/`: API logic
+  - `scripts/seedUsers.ts`: User seeding script
+
+### Setup & Run
+```bash
+cd backend
+npm install
+npx prisma migrate dev
+npm run dev
+```
+
+---
+
+## Frontend
+
+- **Tech Stack:** React, Vite, TypeScript, TailwindCSS
+- **Location:** `src/`
+- **Key Files:**
+  - `App.tsx`, `main.tsx`: App entry points
+  - `components/`: UI components
+  - `services/`: API calls
+  - `contexts/`: React contexts
+  - `types/`, `utils/`: Types and utilities
+
+### Setup & Run
+```bash
+npm install
+npm run dev
+```
+
+---
+
+## Environment Variables
+- Backend: see `backend/.env.example`
+- Frontend: create `.env` with `VITE_API_URL` if backend runs on a different port
+
+---
+
+## License
+MIT
 
 *   .NET (Specify version, e.g., .NET 6, .NET 7)
 *   ASP.NET Core (If applicable, specify version)

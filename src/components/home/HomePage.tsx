@@ -24,7 +24,6 @@ import { TransformCTA } from "./TransformCTA";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { BestProducts } from "./BestProducts";
 import { API_BASE_URL } from "../../utils/apiClient";
-import { DataSourceIndicator } from "../DataSourceIndicator";
 
 // Animation variants
 const fadeIn = {
@@ -998,7 +997,6 @@ export function HomePage() {
       <TransformCTA />
 
       {/* Data Source Indicator */}
-      <DataSourceIndicator />
     </div>
   );
 }
