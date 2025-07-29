@@ -1,60 +1,46 @@
 // src/contexts/AuthContext.tsx
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from 'react';
-import { authService, LoginResponse, AuthUser } from '../services/authService';
-import axios from 'axios';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { authService, AuthUser, LoginResponse } from '../services/authService';
 
 interface AuthContextType {
   user: AuthUser | null;
   login: (email: string, password: string) => Promise<LoginResponse>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: async () => ({ success: false }),
-  logout: () => {},
+  login: async () => ({ success: false, message: 'Not initialized' }),
+  logout: async () => {},
 });
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  // Au montage, si on a un token, on le remet dans axios et on fetchMe()
+  // À l’“entrée” de l’app, on essaie de récupérer l’utilisateur courant
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-      authService.fetchMe()
-        .then(me => setUser(me))
-        .catch(() => {
-          localStorage.removeItem('auth_token');
-          delete axios.defaults.headers.common.Authorization;
-        });
-    }
+    (async () => {
+      try {
+        const me = await authService.fetchMe();
+        setUser(me);
+      } catch {
+        setUser(null);
+      }
+    })();
   }, []);
 
+  // login() mettra à jour le user dans le contexte
   const login = async (email: string, password: string) => {
     const result = await authService.login(email, password);
-    if (result.success && result.token) {
-      localStorage.setItem('auth_token', result.token);
-      axios.defaults.headers.common.Authorization = `Bearer ${result.token}`;
-      // recharge l’utilisateur
-      const me = await authService.fetchMe();
-      setUser(me);
-      result.user = me;
+    if (result.success && result.user) {
+      setUser(result.user);
     }
     return result;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await authService.signOut();
     setUser(null);
-    localStorage.removeItem('auth_token');
-    delete axios.defaults.headers.common.Authorization;
   };
 
   return (
