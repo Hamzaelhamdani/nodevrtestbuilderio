@@ -1,7 +1,7 @@
 // VenturesRoom Database Types
 
 // Enums
-export type UserRole = "client" | "startup" | "structure" | "admin";
+export type UserRole = 'admin' | 'startup' | 'structure' | 'client';
 export type LinkStatus = "pending" | "accepted" | "rejected";
 export type OrderStatus =
   | "pending"
@@ -10,7 +10,7 @@ export type OrderStatus =
   | "cancelled"
   | "refunded";
 export type StructureType =
-  | "incubator"
+  | "incubator"   
   | "accelerator"
   | "investor"
   | "mentor"

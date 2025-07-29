@@ -1,7 +1,5 @@
-// src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authService, LoginResponse } from '../services/authService';
-import type { AuthUser } from '../types/database';
+import { authService, AuthUser, LoginResponse } from '../services/authService';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -18,7 +16,6 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  // Au montage, on essaye de récupérer l’utilisateur courant depuis le token stocké
   useEffect(() => {
     (async () => {
       try {
@@ -30,8 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     })();
   }, []);
 
-  // login() appellera authService.login puis mettra à jour le user
-  const login = async (email: string, password: string): Promise<LoginResponse> => {
+  const login = async (email: string, password: string) => {
     const result = await authService.login(email, password);
     if (result.success && result.user) {
       setUser(result.user);
@@ -39,8 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return result;
   };
 
-  // logout() effacera le token et remettra user à null
-  const logout = async (): Promise<void> => {
+  const logout = async () => {
     await authService.signOut();
     setUser(null);
   };
@@ -52,5 +47,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Hook pour récupérer le contexte facilement
-export const useAuth = (): AuthContextType => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);

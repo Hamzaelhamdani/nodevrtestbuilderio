@@ -1,87 +1,129 @@
 // src/services/authService.ts
 import apiClient from '../utils/apiClient'
-import type { AuthUser, UserRole } from '../types/database'
-
-export type { AuthUser, UserRole }  // <-- on ré-exporte les types
+import { AuthUser, UserRole } from '../types/database'
 
 export interface LoginResponse {
-  success:       boolean
-  user?:         AuthUser
-  token?:        string
+  success: boolean
+  user?: AuthUser
+  token?: string
   redirect_path?: string
-  message?:      string
+  message?: string
 }
 
-// redirections par rôle
+// Helper pour rediriger selon le rôle
 const getRedirectPath = (role: UserRole): string => {
   switch (role) {
-    case 'admin':     return '/dashboard/admin'
-    case 'startup':   return '/dashboard/startup'
-    case 'structure': return '/dashboard/structure'
-    case 'client':    return '/dashboard/client'
-    default:          return '/'
+    case 'admin':
+      return '/dashboard/admin'
+    case 'startup':
+      return '/dashboard/startup'
+    case 'structure':           // <— ici "structure" et non "supportstructure"
+      return '/dashboard/structure'
+    case 'client':
+      return '/dashboard/client'
+    default:
+      return '/'
   }
 }
 
 export const authService = {
+  // ——— LOGIN ———
   async login(email: string, password: string): Promise<LoginResponse> {
-    const payload = await apiClient.post<{
-      user: AuthUser
-      token: string
-      redirect_path?: string
-      message?: string
-    }>('/auth/login', { email, password })
+    try {
+      const payload = await apiClient.post<{
+        user: AuthUser
+        token: string
+        redirect_path?: string
+        message?: string
+      }>('/auth/login', { email, password })
 
-    if (!payload.token) {
-      return { success: false, message: payload.message || 'Login failed' }
-    }
+      if (!payload.token) {
+        return {
+          success: false,
+          message: payload.message || 'Login failed',
+        }
+      }
 
-    apiClient.setAuthToken(payload.token)
-    return {
-      success:       true,
-      user:          payload.user,
-      token:         payload.token,
-      redirect_path: payload.redirect_path ?? getRedirectPath(payload.user.role),
-      message:       payload.message,
+      apiClient.setAuthToken(payload.token)
+      return {
+        success: true,
+        user: payload.user,
+        token: payload.token,
+        redirect_path:
+          payload.redirect_path ?? getRedirectPath(payload.user.role),
+        message: payload.message,
+      }
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : 'Login failed',
+      }
     }
   },
 
+  // ——— SIGN UP ———
   async signUp(data: {
     name: string
     email: string
     password: string
     role: UserRole
   }): Promise<LoginResponse> {
-    const payload = await apiClient.post<{
-      user: AuthUser
-      token: string
-      redirect_path?: string
-      message?: string
-    }>('/auth/register', data)
+    try {
+      const payload = await apiClient.post<{
+        user: AuthUser
+        token: string
+        redirect_path?: string
+        message?: string
+      }>('/auth/register', data)
 
-    if (!payload.token) {
-      return { success: false, message: payload.message || 'Registration failed' }
-    }
+      if (!payload.token) {
+        return {
+          success: false,
+          message: payload.message || 'Registration failed',
+        }
+      }
 
-    apiClient.setAuthToken(payload.token)
-    return {
-      success:       true,
-      user:          payload.user,
-      token:         payload.token,
-      redirect_path: payload.redirect_path ?? getRedirectPath(payload.user.role),
-      message:       payload.message,
+      apiClient.setAuthToken(payload.token)
+      return {
+        success: true,
+        user: payload.user,
+        token: payload.token,
+        redirect_path:
+          payload.redirect_path ?? getRedirectPath(payload.user.role),
+        message: payload.message,
+      }
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : 'Registration failed',
+      }
     }
   },
 
-  async fetchMe(): Promise<AuthUser> {
-    const res = await apiClient.get<{ success: boolean; data: AuthUser; message?: string }>('/auth/me')
-    if (!res.success || !res.data) {
-      throw new Error(res.message || 'Could not fetch user')
+  // ——— FETCH CURRENT USER ———
+  async fetchMe(): Promise<AuthUser | null> {
+    try {
+      const res = await apiClient.get<{
+        success: boolean
+        data: AuthUser
+        message?: string
+      }>('/auth/me')
+      if (!res.success || !res.data) {
+        throw new Error(res.message || 'Could not fetch user')
+      }
+      return res.data
+    } catch {
+      return null
     }
-    return res.data
   },
 
+  // ——— SIGN OUT ———
   async signOut(): Promise<void> {
     apiClient.clearAuthToken()
   },
+
+  getRedirectPath,
 }
+
+// Pour pouvoir importer AuthUser et UserRole depuis ici si besoin
+export type { AuthUser, UserRole }

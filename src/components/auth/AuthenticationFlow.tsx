@@ -1,72 +1,76 @@
-// src/components/auth/AuthenticationFlow.tsx
-import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
-import { authService, LoginResponse, UserRole } from '../../services/authService'
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { authService, UserRole, LoginResponse } from '../../services/authService';
 
 export default function AuthenticationFlow() {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const [mode, setMode] = useState<'login'|'signup'>(
+  const [mode, setMode] = useState<'login' | 'signup'>(
     location.search.includes('mode=signup') ? 'signup' : 'login'
-  )
+  );
+
   useEffect(() => {
-    setMode(location.search.includes('mode=signup') ? 'signup' : 'login')
-  }, [location.search])
+    setMode(location.search.includes('mode=signup') ? 'signup' : 'login');
+  }, [location.search]);
 
-  // Shared fields
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
+  // — champs communs —
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
 
-  // Signup-only
-  const [fullName, setFullName]   = useState('')
-  const [signupEmail, setSignupEmail]     = useState('')
-  const [signupPassword, setSignupPassword] = useState('')
-  const [signupConfirm, setSignupConfirm]   = useState('')
-  const [signupRole, setSignupRole]         = useState<UserRole>('client')
+  // — champs signup —
+  const [fullName, setFullName]           = useState('');
+  const [signupEmail, setSignupEmail]     = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupConfirm, setSignupConfirm]   = useState('');
+  const [signupRole, setSignupRole]         = useState<UserRole>('client');
 
-  // — LOGIN —
+  // LOGIN
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const result: LoginResponse = await login(email, password)
-    console.log('[AuthFlow] login →', result)
-    if (!result.success || !result.user) {
-      alert(result.message || 'Login failed')
-      return
-    }
-    navigate(result.redirect_path!, { replace: true })
-  }
+    e.preventDefault();
+    const result: LoginResponse = await login(email, password);
+    console.log('[AuthFlow] login →', result);
 
-  // — SIGN UP —
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (signupPassword !== signupConfirm) {
-      alert('Passwords do not match')
-      return
+    if (!result.success || !result.user) {
+      alert(result.message || 'Login failed');
+      return;
     }
-    const result = await authService.signUp({
+    navigate(result.redirect_path!, { replace: true });
+  };
+
+  // SIGN UP
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (signupPassword !== signupConfirm) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    const result: LoginResponse = await authService.signUp({
       name:     fullName,
       email:    signupEmail,
       password: signupPassword,
       role:     signupRole,
-    })
-    console.log('[AuthFlow] signup →', result)
+    });
+    console.log('[AuthFlow] signup →', result);
+
     if (!result.success) {
-      alert(result.message || 'Registration failed')
-      return
+      alert(result.message || 'Registration failed');
+      return;
     }
-    alert('Registration successful! You can now log in.')
-    setMode('login')
-    setEmail(signupEmail)
-    setPassword('')
-    setFullName('')
-    setSignupEmail('')
-    setSignupPassword('')
-    setSignupConfirm('')
-    setSignupRole('client')
-  }
+
+    alert('Registration successful! You can now log in.');
+    setMode('login');
+    setEmail(signupEmail);
+    setPassword('');
+    setFullName('');
+    setSignupEmail('');
+    setSignupPassword('');
+    setSignupConfirm('');
+    setSignupRole('client');
+  };
 
   return (
     <div className="p-4 max-w-md mx-auto">
@@ -94,19 +98,12 @@ export default function AuthenticationFlow() {
             autoComplete="current-password"
             className="w-full p-2 border rounded bg-gray-900 text-white"
           />
-          <button
-            type="submit"
-            className="w-full p-2 rounded bg-[#8BFF4D] font-semibold"
-          >
+          <button type="submit" className="w-full p-2 rounded bg-[#8BFF4D] font-semibold">
             Sign In
           </button>
           <p className="text-center text-gray-400">
             Don’t have an account?{' '}
-            <button
-              type="button"
-              onClick={() => setMode('signup')}
-              className="text-green-400 hover:underline"
-            >
+            <button onClick={() => setMode('signup')} className="text-green-400 hover:underline">
               Sign Up
             </button>
           </p>
@@ -153,27 +150,20 @@ export default function AuthenticationFlow() {
           >
             <option value="client">Client</option>
             <option value="startup">Startup</option>
-            <option value="structure">Support Structure</option>
+            <option value="supportstructure">Support Structure</option>
             <option value="admin">Admin</option>
           </select>
-          <button
-            type="submit"
-            className="w-full p-2 rounded bg-[#8BFF4D] font-semibold"
-          >
+          <button type="submit" className="w-full p-2 rounded bg-[#8BFF4D] font-semibold">
             Sign Up
           </button>
           <p className="text-center text-gray-400">
             Already have an account?{' '}
-            <button
-              type="button"
-              onClick={() => setMode('login')}
-              className="text-green-400 hover:underline"
-            >
+            <button onClick={() => setMode('login')} className="text-green-400 hover:underline">
               Sign In
             </button>
           </p>
         </form>
       )}
     </div>
-  )
+  );
 }
