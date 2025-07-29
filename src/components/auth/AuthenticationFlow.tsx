@@ -6,23 +6,23 @@ import { authService, UserRole, LoginResponse } from '../../services/authService
 
 export default function AuthenticationFlow() {
   const location = useLocation();
+  const navigate  = useNavigate();
+  const { login } = useAuth();
+
   const [mode, setMode] = useState<'login'|'signup'>(
     location.search.includes('mode=signup') ? 'signup' : 'login'
   );
 
-  // — shared login fields —
+  // shared login fields
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
 
-  // — signup-only fields —
+  // signup-only fields
   const [signupFullName, setSignupFullName] = useState('');
   const [signupEmail, setSignupEmail]       = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirm, setSignupConfirm]   = useState('');
   const [signupRole, setSignupRole]         = useState<UserRole>('client');
-
-  const { login } = useAuth();
-  const navigate  = useNavigate();
 
   useEffect(() => {
     setMode(location.search.includes('mode=signup') ? 'signup' : 'login');
@@ -37,15 +37,9 @@ export default function AuthenticationFlow() {
       alert(result.message || 'Login failed');
       return;
     }
-    // Redirection par rôle
-    const role = result.user.role.toLowerCase();
-    const map: Record<string,string> = {
-      startup:   '/dashboard/startup',
-      structure: '/dashboard/structure',
-      admin:     '/dashboard/admin',
-      client:    '/dashboard/client',
-    };
-    navigate(map[role] || '/', { replace: true });
+    // utilise redirect_path retourné par le service
+    const target = result.redirect_path ?? '/';
+    navigate(target, { replace: true });
   };
 
   // — SIGN UP —
@@ -68,10 +62,10 @@ export default function AuthenticationFlow() {
     }
     alert('Registration successful! You can now log in.');
     setMode('login');
-    // Pré-remplir le login
+    // pré-remplir le formulaire de login
     setEmail(signupEmail);
     setPassword('');
-    // Reset form signup
+    // reset du formulaire d’inscription
     setSignupFullName('');
     setSignupEmail('');
     setSignupPassword('');

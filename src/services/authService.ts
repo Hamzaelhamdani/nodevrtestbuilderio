@@ -2,7 +2,7 @@
 import apiClient from '../utils/apiClient';
 import { AuthUser, UserRole } from '../types/database';
 
-// On ré‐exporte ici les types pour pouvoir les importer depuis authService
+// On ré-exporte AuthUser et UserRole
 export type { AuthUser, UserRole };
 
 export interface LoginResponse {
@@ -14,22 +14,24 @@ export interface LoginResponse {
 }
 
 /**
- * Retourne la route de redirection en fonction du rôle.
+ * Retourne la route de redirection en fonction du rôle (insensible à la casse).
  */
-export const getRedirectPath = (role: UserRole): string => {
-  switch (role) {
-    case 'admin':     return '/dashboard/admin';
-    case 'startup':   return '/dashboard/startup';
-    case 'structure': return '/dashboard/structure';
-    case 'client':    return '/dashboard/client';
-    default:          return '/';
+export const getRedirectPath = (role: string): string => {
+  const key = role.toLowerCase();
+  if (key === 'admin') return '/dashboard/admin';
+  if (key === 'startup') return '/dashboard/startup';
+  // on accepte soit "supportstructure" soit l’ancien "structure"
+  if (key === 'supportstructure' || key === 'structure') {
+    return '/dashboard/structure';
   }
+  if (key === 'client') return '/dashboard/client';
+  return '/';
 };
 
 export const authService = {
   /**
    * LOGIN
-   * L’API renvoie { user?, token?, message?, redirect_path? }.
+   * Attendu : POST /auth/login → { user?, token?, message?, redirect_path? }
    */
   async login(email: string, password: string): Promise<LoginResponse> {
     const payload = await apiClient.post<{
@@ -61,7 +63,7 @@ export const authService = {
 
   /**
    * SIGN UP
-   * L’API renvoie { user?, token?, message?, redirect_path? }.
+   * Attendu : POST /auth/register → { user?, token?, message?, redirect_path? }
    */
   async signUp(data: {
     name:     string;
@@ -98,7 +100,7 @@ export const authService = {
 
   /**
    * fetchMe()
-   * L’API renvoie { user }.
+   * Attendu : GET /auth/me → { user }
    */
   async fetchMe(): Promise<AuthUser> {
     const payload = await apiClient.get<{ user?: AuthUser }>('/auth/me');
