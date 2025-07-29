@@ -1,178 +1,67 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { authService, getRedirectPath } from "../services/authService";
-import { AuthUser, UserRole } from "../types/database";
+// src/contexts/AuthContext.tsx
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
+import { authService, LoginResponse, AuthUser } from '../services/authService';
+import axios from 'axios';
 
 interface AuthContextType {
   user: AuthUser | null;
-  loading: boolean;
-  login: (
-    email: string,
-    password: string,
-  ) => Promise<{ success: boolean; message?: string }>;
-  logout: () => Promise<void>;
-  isAuthenticated: boolean;
-  hasRole: (roles: UserRole | UserRole[]) => boolean;
-  refreshUser: () => Promise<void>;
-  updateProfile: (
-    updates: Partial<AuthUser>,
-  ) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string) => Promise<LoginResponse>;
+  logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  login: async () => ({ success: false }),
+  logout: () => {},
+});
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
+  // Au montage, si on a un token, on le remet dans axios et on fetchMe()
   useEffect(() => {
-    // Get initial session
-    initializeAuth();
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+      authService.fetchMe()
+        .then(me => setUser(me))
+        .catch(() => {
+          localStorage.removeItem('auth_token');
+          delete axios.defaults.headers.common.Authorization;
+        });
+    }
   }, []);
 
-  const initializeAuth = async () => {
-    try {
-      const currentUser = await authService.getCurrentUser();
-      console.log('[AuthContext] initializeAuth: currentUser', currentUser);
-      setUser(currentUser);
-    } catch (error) {
-      // Only log if it's not a backend unavailable error
-      if (error instanceof Error && !error.message.includes('Backend unavailable')) {
-        console.error("Error initializing auth:", error);
-      }
-      // In case of backend unavailability, set user to null and continue
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refreshUser = async () => {
-    try {
-      const currentUser = await authService.getCurrentUser();
-      console.log('[AuthContext] refreshUser: currentUser', currentUser);
-      setUser(currentUser);
-    } catch (error) {
-      console.error("Error refreshing user:", error);
-      setUser(null);
-    }
-  };
-
   const login = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      const response = await authService.signIn(email, password);
-
-      if (response.success && response.user) {
-        setUser(response.user);
-        console.log('[AuthContext] login: response.user', response.user);
-        // Auto-redirect based on role
-        if (response.redirect_path) {
-          navigate(response.redirect_path, { replace: true });
-        }
-      }
-
-      return response;
-    } catch (error) {
-      console.error("Login error:", error);
-      return { success: false, message: "An unexpected error occurred" };
-    } finally {
-      setLoading(false);
+    const result = await authService.login(email, password);
+    if (result.success && result.token) {
+      localStorage.setItem('auth_token', result.token);
+      axios.defaults.headers.common.Authorization = `Bearer ${result.token}`;
+      // recharge l’utilisateur
+      const me = await authService.fetchMe();
+      setUser(me);
+      result.user = me;
     }
+    return result;
   };
 
-  const logout = async () => {
-    try {
-      setLoading(true);
-      await authService.signOut();
-      setUser(null);
-      navigate("/", { replace: true });
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setLoading(false);
-    }
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('auth_token');
+    delete axios.defaults.headers.common.Authorization;
   };
 
-  const updateProfile = async (updates: Partial<AuthUser>) => {
-    try {
-      const response = await authService.updateProfile(updates);
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
-      if (response.success) {
-        // Update local user state
-        setUser((current) => (current ? { ...current, ...updates } : null));
-      }
-
-      return response;
-    } catch (error) {
-      console.error("Update profile error:", error);
-      return { success: false, message: "An unexpected error occurred" };
-    }
-  };
-
-  const hasRole = (roles: UserRole | UserRole[]): boolean => {
-    return authService.hasRole(user, roles);
-  };
-
-  const value: AuthContextType = {
-    user,
-    loading,
-    login,
-    logout,
-    isAuthenticated: !!user,
-    hasRole,
-    refreshUser,
-    updateProfile,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-}
-
-// Helper hooks for role-based access
-export function useRequireAuth(roles?: UserRole | UserRole[]) {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        navigate("/auth", { replace: true });
-      } else if (roles && !authService.hasRole(user, roles)) {
-        // Redirect to appropriate dashboard based on user role
-        const redirectPath = getRedirectPath(user.role);
-        navigate(redirectPath, { replace: true });
-      }
-    }
-  }, [user, loading, roles, navigate]);
-
-  return {
-    user,
-    loading,
-    isAuthorized: !roles || authService.hasRole(user, roles),
-  };
-}
-
-export function useRequireAdmin() {
-  return useRequireAuth("admin");
-}
-
-export function useRequireStartup() {
-  return useRequireAuth("startup");
-}
-
-export function useRequireStructure() {
-  return useRequireAuth("structure");
-}
-
-export function useRequireClient() {
-  return useRequireAuth("client");
-}
+export const useAuth = () => useContext(AuthContext);
