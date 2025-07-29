@@ -1,0 +1,211 @@
+// ---------- GENERATOR & DATASOURCE ----------
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- MODELS PRINCIPAUX ----------
+model User {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  password String
+  name     String
+  role     Role     @default(Client)
+
+  // Relations possibles
+  startup         Startup?
+  supportStructure SupportStructure?
+  orders          Order[]
+  invoices        Invoice[]
+  notifications   Notification[]
+}
+
+model Startup {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  logo        String?
+  website     String?
+  sector      String?
+  country     String?
+  ownerId     String   @unique
+  owner       User     @relation(fields: [ownerId], references: [id])
+
+  products    Product[]
+  structures  SupportStructureStartup[]
+  commissions Commission[]
+  discounts   Discount[]
+}
+
+model SupportStructure {
+  id        String   @id @default(cuid())
+  name      String
+  logo      String?
+  website   String?
+  country   String?
+  ownerId   String   @unique
+  owner     User     @relation(fields: [ownerId], references: [id])
+
+  startups     SupportStructureStartup[]
+  commissions  Commission[]
+}
+
+model SupportStructureStartup {
+  id                  String                    @id @default(cuid())
+  startupId           String
+  supportStructureId  String
+  status              SupportStructureStatus    @default(Pending)
+
+  startup             Startup                   @relation(fields: [startupId], references: [id])
+  supportStructure    SupportStructure          @relation(fields: [supportStructureId], references: [id])
+
+  @@unique([startupId, supportStructureId])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  price       Decimal
+  type        ProductType
+  inventory   Int      @default(0)
+  image       String?
+  description String?
+  startupId   String
+  startup     Startup  @relation(fields: [startupId], references: [id])
+
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  orders      Order[]
+  discounts   Discount[]
+  subscriptionPlans SubscriptionPlan[] @relation("ProductSubscriptions")
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  products Product[]
+}
+
+model SubscriptionPlan {
+  id        String   @id @default(cuid())
+  name      String
+  price     Decimal
+  currency  Currency
+  interval  Interval
+  trialDays Int?
+
+  products  Product[] @relation("ProductSubscriptions")
+  orders    Order[]
+}
+
+model Order {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  subscriptionId String?
+  subscription   SubscriptionPlan? @relation(fields: [subscriptionId], references: [id])
+  products       Product[]
+  status         OrderStatus @default(Pending)
+  createdAt      DateTime    @default(now())
+  total          Decimal
+
+  invoice        Invoice?
+  commission     Commission?
+}
+
+model Invoice {
+  id         String        @id @default(cuid())
+  orderId    String        @unique
+  order      Order         @relation(fields: [orderId], references: [id])
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  amount     Decimal
+  status     InvoiceStatus @default(Pending)
+  createdAt  DateTime      @default(now())
+}
+
+model Commission {
+  id              String   @id @default(cuid())
+  orderId         String   @unique
+  startupId       String
+  structureId     String?
+  amountPlatform  Decimal
+  amountStartup   Decimal
+  amountStructure Decimal?
+
+  startup         Startup  @relation(fields: [startupId], references: [id])
+  structure       SupportStructure? @relation(fields: [structureId], references: [id])
+  order           Order    @relation(fields: [orderId], references: [id])
+}
+
+model Discount {
+  id         String   @id @default(cuid())
+  productId  String
+  startupId  String
+  percentage Float
+  startDate  DateTime
+  endDate    DateTime
+
+  product    Product  @relation(fields: [productId], references: [id])
+  startup    Startup  @relation(fields: [startupId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ---------- ENUMS ----------
+enum Role {
+  Client
+  Admin
+  Startup
+  SupportStructure
+}
+
+enum ProductType {
+  Physical
+  Digital
+  Subscription
+}
+
+enum Interval {
+  Day
+  Week
+  Month
+  Year
+}
+
+enum Currency {
+  USD
+  EUR
+  MAD
+}
+
+enum OrderStatus {
+  Pending
+  Shipped
+  Delivered
+  Canceled
+  Refunded
+}
+
+enum InvoiceStatus {
+  Pending
+  Paid
+  Refunded
+}
+
+enum SupportStructureStatus {
+  Pending
+  Approved
+  Declined
+}
