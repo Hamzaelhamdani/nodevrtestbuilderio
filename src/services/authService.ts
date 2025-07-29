@@ -1,119 +1,87 @@
 // src/services/authService.ts
-import apiClient from '../utils/apiClient';
-import { AuthUser, UserRole } from '../types/database';
+import apiClient from '../utils/apiClient'
+import type { AuthUser, UserRole } from '../types/database'
 
-// On ré-exporte AuthUser et UserRole
-export type { AuthUser, UserRole };
+export type { AuthUser, UserRole }  // <-- on ré-exporte les types
 
 export interface LoginResponse {
-  success:        boolean;
-  user?:          AuthUser;
-  token?:         string;
-  redirect_path?: string;
-  message?:       string;
+  success:       boolean
+  user?:         AuthUser
+  token?:        string
+  redirect_path?: string
+  message?:      string
 }
 
-/**
- * Retourne la route de redirection en fonction du rôle (insensible à la casse).
- */
-export const getRedirectPath = (role: string): string => {
-  const key = role.toLowerCase();
-  if (key === 'admin') return '/dashboard/admin';
-  if (key === 'startup') return '/dashboard/startup';
-  // on accepte soit "supportstructure" soit l’ancien "structure"
-  if (key === 'supportstructure' || key === 'structure') {
-    return '/dashboard/structure';
+// redirections par rôle
+const getRedirectPath = (role: UserRole): string => {
+  switch (role) {
+    case 'admin':     return '/dashboard/admin'
+    case 'startup':   return '/dashboard/startup'
+    case 'structure': return '/dashboard/structure'
+    case 'client':    return '/dashboard/client'
+    default:          return '/'
   }
-  if (key === 'client') return '/dashboard/client';
-  return '/';
-};
+}
 
 export const authService = {
-  /**
-   * LOGIN
-   * Attendu : POST /auth/login → { user?, token?, message?, redirect_path? }
-   */
   async login(email: string, password: string): Promise<LoginResponse> {
     const payload = await apiClient.post<{
-      user?:          AuthUser;
-      token?:         string;
-      message?:       string;
-      redirect_path?: string;
-    }>('/auth/login', { email, password });
+      user: AuthUser
+      token: string
+      redirect_path?: string
+      message?: string
+    }>('/auth/login', { email, password })
 
-    if (!payload.user) {
-      return {
-        success: false,
-        message: payload.message || 'Login failed',
-      };
+    if (!payload.token) {
+      return { success: false, message: payload.message || 'Login failed' }
     }
 
-    if (payload.token) {
-      apiClient.setAuthToken(payload.token);
-    }
-
+    apiClient.setAuthToken(payload.token)
     return {
-      success:        true,
-      user:           payload.user,
-      token:          payload.token,
-      message:        payload.message,
-      redirect_path:  payload.redirect_path ?? getRedirectPath(payload.user.role),
-    };
+      success:       true,
+      user:          payload.user,
+      token:         payload.token,
+      redirect_path: payload.redirect_path ?? getRedirectPath(payload.user.role),
+      message:       payload.message,
+    }
   },
 
-  /**
-   * SIGN UP
-   * Attendu : POST /auth/register → { user?, token?, message?, redirect_path? }
-   */
   async signUp(data: {
-    name:     string;
-    email:    string;
-    password: string;
-    role:     UserRole;
+    name: string
+    email: string
+    password: string
+    role: UserRole
   }): Promise<LoginResponse> {
     const payload = await apiClient.post<{
-      user?:          AuthUser;
-      token?:         string;
-      message?:       string;
-      redirect_path?: string;
-    }>('/auth/register', data);
+      user: AuthUser
+      token: string
+      redirect_path?: string
+      message?: string
+    }>('/auth/register', data)
 
-    if (!payload.user) {
-      return {
-        success: false,
-        message: payload.message || 'Registration failed',
-      };
+    if (!payload.token) {
+      return { success: false, message: payload.message || 'Registration failed' }
     }
 
-    if (payload.token) {
-      apiClient.setAuthToken(payload.token);
-    }
-
+    apiClient.setAuthToken(payload.token)
     return {
-      success:        true,
-      user:           payload.user,
-      token:          payload.token,
-      message:        payload.message,
-      redirect_path:  payload.redirect_path ?? getRedirectPath(payload.user.role),
-    };
-  },
-
-  /**
-   * fetchMe()
-   * Attendu : GET /auth/me → { user }
-   */
-  async fetchMe(): Promise<AuthUser> {
-    const payload = await apiClient.get<{ user?: AuthUser }>('/auth/me');
-    if (!payload.user) {
-      throw new Error('Could not fetch current user');
+      success:       true,
+      user:          payload.user,
+      token:         payload.token,
+      redirect_path: payload.redirect_path ?? getRedirectPath(payload.user.role),
+      message:       payload.message,
     }
-    return payload.user;
   },
 
-  /**
-   * SIGN OUT
-   */
-  async signOut(): Promise<void> {
-    apiClient.clearAuthToken();
+  async fetchMe(): Promise<AuthUser> {
+    const res = await apiClient.get<{ success: boolean; data: AuthUser; message?: string }>('/auth/me')
+    if (!res.success || !res.data) {
+      throw new Error(res.message || 'Could not fetch user')
+    }
+    return res.data
   },
-};
+
+  async signOut(): Promise<void> {
+    apiClient.clearAuthToken()
+  },
+}

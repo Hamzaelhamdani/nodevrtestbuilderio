@@ -1,77 +1,72 @@
 // src/components/auth/AuthenticationFlow.tsx
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { authService, UserRole, LoginResponse } from '../../services/authService';
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
+import { authService, LoginResponse, UserRole } from '../../services/authService'
 
 export default function AuthenticationFlow() {
-  const location = useLocation();
-  const navigate  = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { login } = useAuth()
 
   const [mode, setMode] = useState<'login'|'signup'>(
     location.search.includes('mode=signup') ? 'signup' : 'login'
-  );
-
-  // shared login fields
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-
-  // signup-only fields
-  const [signupFullName, setSignupFullName] = useState('');
-  const [signupEmail, setSignupEmail]       = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [signupConfirm, setSignupConfirm]   = useState('');
-  const [signupRole, setSignupRole]         = useState<UserRole>('client');
-
+  )
   useEffect(() => {
-    setMode(location.search.includes('mode=signup') ? 'signup' : 'login');
-  }, [location.search]);
+    setMode(location.search.includes('mode=signup') ? 'signup' : 'login')
+  }, [location.search])
+
+  // Shared fields
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+
+  // Signup-only
+  const [fullName, setFullName]   = useState('')
+  const [signupEmail, setSignupEmail]     = useState('')
+  const [signupPassword, setSignupPassword] = useState('')
+  const [signupConfirm, setSignupConfirm]   = useState('')
+  const [signupRole, setSignupRole]         = useState<UserRole>('client')
 
   // — LOGIN —
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const result: LoginResponse = await login(email, password);
-    console.log('[AuthFlow] login →', result);
+    e.preventDefault()
+    const result: LoginResponse = await login(email, password)
+    console.log('[AuthFlow] login →', result)
     if (!result.success || !result.user) {
-      alert(result.message || 'Login failed');
-      return;
+      alert(result.message || 'Login failed')
+      return
     }
-    // utilise redirect_path retourné par le service
-    const target = result.redirect_path ?? '/';
-    navigate(target, { replace: true });
-  };
+    navigate(result.redirect_path!, { replace: true })
+  }
 
   // — SIGN UP —
   const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (signupPassword !== signupConfirm) {
-      alert('Passwords do not match');
-      return;
+      alert('Passwords do not match')
+      return
     }
-    const result: LoginResponse = await authService.signUp({
-      name:     signupFullName,
+    const result = await authService.signUp({
+      name:     fullName,
       email:    signupEmail,
       password: signupPassword,
       role:     signupRole,
-    });
-    console.log('[AuthFlow] signup →', result);
+    })
+    console.log('[AuthFlow] signup →', result)
     if (!result.success) {
-      alert(result.message || 'Registration failed');
-      return;
+      alert(result.message || 'Registration failed')
+      return
     }
-    alert('Registration successful! You can now log in.');
-    setMode('login');
-    // pré-remplir le formulaire de login
-    setEmail(signupEmail);
-    setPassword('');
-    // reset du formulaire d’inscription
-    setSignupFullName('');
-    setSignupEmail('');
-    setSignupPassword('');
-    setSignupConfirm('');
-    setSignupRole('client');
-  };
+    alert('Registration successful! You can now log in.')
+    setMode('login')
+    setEmail(signupEmail)
+    setPassword('')
+    setFullName('')
+    setSignupEmail('')
+    setSignupPassword('')
+    setSignupConfirm('')
+    setSignupRole('client')
+  }
 
   return (
     <div className="p-4 max-w-md mx-auto">
@@ -121,8 +116,8 @@ export default function AuthenticationFlow() {
           <input
             type="text"
             placeholder="Full Name"
-            value={signupFullName}
-            onChange={e => setSignupFullName(e.target.value)}
+            value={fullName}
+            onChange={e => setFullName(e.target.value)}
             required
             className="w-full p-2 border rounded bg-gray-900 text-white"
           />
@@ -180,5 +175,5 @@ export default function AuthenticationFlow() {
         </form>
       )}
     </div>
-  );
+  )
 }
