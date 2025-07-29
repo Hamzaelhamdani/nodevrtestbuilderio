@@ -83,6 +83,7 @@ class ApiClient {
       fetch(url.toString(), {
         method: 'GET',
         headers: this.getHeaders(),
+        credentials: 'include',
       })
         .then(response => {
           clearTimeout(timeoutId);
@@ -118,6 +119,7 @@ class ApiClient {
         method: 'POST',
         headers: this.getHeaders(),
         body: data ? JSON.stringify(data) : undefined,
+        credentials: 'include',
       })
         .then(response => {
           clearTimeout(timeoutId);
@@ -151,6 +153,7 @@ class ApiClient {
         method: 'PUT',
         headers: this.getHeaders(),
         body: data ? JSON.stringify(data) : undefined,
+        credentials: 'include',
       })
         .then(response => {
           clearTimeout(timeoutId);
@@ -181,6 +184,7 @@ class ApiClient {
       fetch(`${this.baseURL}${endpoint}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
+        credentials: 'include',
       })
         .then(response => {
           clearTimeout(timeoutId);

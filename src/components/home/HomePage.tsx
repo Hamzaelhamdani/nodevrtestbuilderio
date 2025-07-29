@@ -309,8 +309,8 @@ export function HomePage() {
                   ? "Incubator"
                   : "Accelerator",
               isApproved: structure.is_approved,
-              logoPath: structure.logo_url,
-              lastActiveAt: structure.updated_at,
+              logoPath: structure.logo_url ?? null,
+              lastActiveAt: structure.updated_at ?? null,
             },
             startups: [], // Would need to fetch related startups
             startupsCount: Math.floor(Math.random() * 5) + 1, // Mock count for now
@@ -426,10 +426,6 @@ export function HomePage() {
               key={i}
               className="star"
               style={{
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                width: `${Math.random() * 2 + 0.5}px`,
-                height: `${Math.random() * 2 + 0.5}px`,
                 animationDelay: `${Math.random() * 10}s`,
                 animationDuration: `${Math.random() * 5 + 3}s`,
                 opacity: Math.random() * 0.7 + 0.3,

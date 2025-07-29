@@ -17,10 +17,23 @@ if (!JWT_SECRET) {
 
 export const register = async (req: Request, res: Response) => {
   try {
+
     const { email, password, role, name } = req.body;
 
     if (!email || !password || !role || !name) {
       return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // Map frontend role to Prisma enum
+    const roleMap: Record<string, Role> = {
+      client: Role.Client,
+      startup: Role.Startup,
+      structure: Role.SupportStructure,
+      admin: Role.Admin,
+    };
+    const prismaRole = roleMap[role.toLowerCase()];
+    if (!prismaRole) {
+      return res.status(400).json({ message: `Invalid role: ${role}` });
     }
 
     // Hasher le mot de passe
@@ -31,7 +44,7 @@ export const register = async (req: Request, res: Response) => {
       data: {
         email,
         password: hashedPassword,
-        role: role as Role,
+        role: prismaRole,
         name,
       },
     });
@@ -47,10 +60,16 @@ export const register = async (req: Request, res: Response) => {
     // @ts-ignore
     const { password: _, ...safeUser } = user;
 
+    // Set JWT as HttpOnly cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60 * 1000, // 8 hours
+    });
     res.status(201).json({
       message: "User registered",
-      user: safeUser,
-      token,
+      user: safeUser
     });
   } catch (error: any) {
     console.error("❌ Registration Error:", error);
@@ -92,10 +111,16 @@ export const login = async (req: Request, res: Response) => {
     // @ts-ignore
     const { password: _, ...safeUser } = user;
 
+    // Set JWT as HttpOnly cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60 * 1000, // 8 hours
+    });
     res.status(200).json({
       message: "Login successful",
-      user: safeUser,
-      token,
+      user: safeUser
     });
   } catch (error: any) {
     console.error("❌ Login Error:", error);

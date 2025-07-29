@@ -1,5 +1,5 @@
 // src/App.tsx
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Layout } from "./components/layout/Layout";
@@ -176,7 +176,7 @@ function AppRoutesWithUser() {
         element={
           <StartupRoute>
             <AnimatedRoute>
-              <StartupDashboard user={user} />
+              <StartupDashboard user={user} navigate={(route: string) => useNavigate()(route)} />
             </AnimatedRoute>
           </StartupRoute>
         }

@@ -4,7 +4,7 @@ import { AuthUser, UserRole, CreateStartupRequest, CreateStructureRequest } from
 interface SignUpData {
   email: string;
   password: string;
-  full_name: string;
+  name: string;
   phone?: string;
   country?: string;
   role: UserRole;
@@ -20,7 +20,7 @@ interface LoginResponse {
 }
 
 // Redirect paths based on user role
-const getRedirectPath = (role: UserRole): string => {
+export const getRedirectPath = (role: UserRole): string => {
   switch (role) {
     case 'admin':
       return '/dashboard/admin';
@@ -70,7 +70,8 @@ export const authService = {
         const demoUser = {
           id: `demo-${Date.now()}`,
           email: data.email,
-          full_name: data.full_name,
+          name: data.name,
+          full_name: data.name,
           role: data.role,
           is_approved: data.role === 'client',
           created_at: new Date().toISOString(),

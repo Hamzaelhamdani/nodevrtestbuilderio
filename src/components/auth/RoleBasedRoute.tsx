@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { getRedirectPath } from "../../services/authService";
 import { authService } from "../../services/authService";
 import { UserRole, AuthUser } from "../../types/database";
 
@@ -48,11 +49,17 @@ export function RoleBasedRoute({
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
-  if (!allowedRoles.includes(user.role)) {
+  // Case-insensitive role check
+  const userRoleLower = user.role.toLowerCase();
+  const allowedRolesLower = allowedRoles.map(r => r.toLowerCase());
+  console.log('[RoleBasedRoute] allowedRoles:', allowedRoles, '| allowedRolesLower:', allowedRolesLower, '| user.role:', user.role, '| userRoleLower:', userRoleLower);
+  if (!allowedRolesLower.includes(userRoleLower)) {
+    console.log('[RoleBasedRoute] BLOCKED: userRoleLower not in allowedRolesLower, redirecting to', getRedirectPath(user.role));
     // Redirect to appropriate dashboard based on role
-    const redirectPath = authService.getRoleRedirectPath(user.role);
+    const redirectPath = getRedirectPath(user.role);
     return <Navigate to={redirectPath} replace />;
   }
+  console.log('[RoleBasedRoute] ALLOWED: rendering children for userRoleLower', userRoleLower);
 
   return <>{children}</>;
 }

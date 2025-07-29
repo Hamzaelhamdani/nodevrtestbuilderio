@@ -1,149 +1,280 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useAuth } from "../../contexts/AuthContext";
-import { startupService } from "../../services/startupService";
-import {
-  Rocket,
-  Package,
-  DollarSign,
-  Users,
-  TrendingUp,
-  TrendingDown,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  BarChart3,
-  Building2,
-  Star,
-  ShoppingCart,
-  Percent,
-  Calendar,
-  ArrowUpRight,
-  Settings,
-  FileText,
-  Link2,
-  CheckCircle,
-  Clock,
-  XCircle,
-} from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Input } from "../ui/input";
-import { Badge } from "../ui/badge";
-import { Progress } from "../ui/progress";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { toast } from "sonner";
 
-interface StartupDashboardProps {
-  user?: any;
+import React, { useState, useEffect } from "react";
+import apiClient from '../../utils/apiClient';
+import { Button } from "../ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
+import { Badge } from "../ui/badge";
+import {
+  RocketIcon,
+  SettingsIcon,
+  PlusIcon,
+  BarChart3Icon,
+  PackageIcon,
+  Building2Icon,
+  ShoppingCartIcon,
+  TrendingUpIcon,
+  TrendingDownIcon,
+  DollarSignIcon,
+  EditIcon,
+  EyeIcon,
+  Trash2Icon,
+  CheckCircleIcon,
+  ClockIcon,
+  XCircleIcon
+} from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent
+} from "../ui/card";
+import { Progress } from "../ui/progress";
+import { SettingsPanel } from "./SettingsPanel";
+import { NotificationsPanel } from "./NotificationsPanel";
+import { SupportStructureManagement } from "./SupportStructureManagement";
+import { CustomerManagement } from "./CustomerManagement";
+import { OrdersManagement } from "./OrdersManagement";
+import { ProductServiceCreation } from "./ProductServiceCreation";
+import { ProductServiceEdit } from "./ProductServiceEdit";
+import { ProductServiceView } from "./ProductServiceView";
+import { RevenueSummary } from "./RevenueSummary";
+import { SalesChart } from "./SalesChart";
+
+// Utility function for formatting currency
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0
+  }).format(amount);
 }
 
-export function StartupDashboard({ user }: StartupDashboardProps) {
-  const { user: authUser } = useAuth();
-  const currentUser = user || authUser;
+// Log when StartupDashboard mounts and receives user
+export function StartupDashboard({ user, navigate }: any) {
+  useEffect(() => {
+    console.log('[StartupDashboard] mounted, user:', user);
+  }, [user]);
+
+
+
+// ...existing code...
+
   const [activeTab, setActiveTab] = useState("overview");
-  const [loading, setLoading] = useState(false);
   const [startup, setStartup] = useState<any>(null);
-  const [products, setProducts] = useState<any[]>([]);
   const [kpis, setKpis] = useState<any>(null);
-  const [structureLinks, setStructureLinks] = useState<any[]>([]);
-
-  // Mock data for demonstration
-  const mockStartup = {
-    id: "startup-1",
-    name: "AI Analytics Pro",
-    description: "Advanced AI-powered analytics platform for businesses",
-    logo_url: "",
-    website: "https://aianalytics.com",
-    founded_date: "2023-01-15",
-    industry: "AI/ML",
-    stage: "Seed",
-    location: "San Francisco, CA",
-    team_size: 12,
-    total_funding: 500000,
-    is_approved: true,
-  };
-
-  const mockProducts = [
-    {
-      id: "1",
-      name: "Business Intelligence Dashboard",
-      description: "Comprehensive BI dashboard with real-time analytics",
-      price: 299.99,
-      category: "Software",
-      is_active: true,
-      stock_quantity: 100,
-    },
-    {
-      id: "2", 
-      name: "AI Prediction Engine",
-      description: "Machine learning models for business forecasting",
-      price: 499.99,
-      category: "Software",
-      is_active: true,
-      stock_quantity: 50,
-    },
-  ];
-
-  const mockKPIs = {
-    totalProducts: 4,
-    totalOrders: 23,
-    totalRevenue: 12450.75,
-    commissionPaid: 1867.61,
-    structuresLinked: 2,
-    activeDiscounts: 1,
-    averageProductPrice: 312.25,
-  };
-
-  const mockStructureLinks = [
-    {
-      id: "1",
-      structure: { name: "TechBoost Accelerator", structure_type: "accelerator" },
-      status: "accepted",
-      invited_at: new Date().toISOString(),
-      invitation_message: "We're excited to support your AI platform",
-    },
-    {
-      id: "2", 
-      structure: { name: "AI Ventures Fund", structure_type: "investor" },
-      status: "pending",
-      invited_at: new Date().toISOString(),
-      invitation_message: "Investment opportunity discussion",
-    },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
+  const [supportStructures, setSupportStructures] = useState<any[]>([]);
 
   useEffect(() => {
-    loadStartupData();
-  }, []);
-
-  const loadStartupData = async () => {
-    try {
+    console.log('[StartupDashboard] mounted, user:', user);
+  }, [user]);
+  useEffect(() => {
+    setStartup(user);
+    const fetchAll = async () => {
       setLoading(true);
-      // Use mock data for demonstration
-      setStartup(mockStartup);
-      setProducts(mockProducts);
-      setKpis(mockKPIs);
-      setStructureLinks(mockStructureLinks);
-    } catch (error) {
-      console.error("Error loading startup data:", error);
-      toast.error("Failed to load startup data");
-    } finally {
-      setLoading(false);
-    }
-  };
+      setError(null);
+      try {
+        const [kpiData, productData, structureData] = await Promise.all([
+          apiClient.get('/startups/dashboard/kpis'),
+          apiClient.get('/startups/products'),
+          apiClient.get('/startups/support-structures'),
+        ]);
+        setKpis(kpiData);
+        setProducts(productData);
+        setSupportStructures(structureData);
+      } catch (err: any) {
+        setError(err?.message || 'Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
+  }, [user]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  if (loading) {
+    return <div className="container max-w-7xl mx-auto px-4 py-8">Loading dashboard...</div>;
+  }
+  if (error) {
+    return <div className="container max-w-7xl mx-auto px-4 py-8 text-red-500">{error}</div>;
+  }
+
+  return (
+    <div className="container max-w-7xl mx-auto px-4 py-8">
+      {/* Header section */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">{kpis?.startupName || startup?.name || "My Startup"}</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your products, orders and customers
+          </p>
+        </div>
+        <div className="mt-4 md:mt-0 flex gap-2">
+          <Button variant="outline" onClick={() => navigate("community-discounts")}>Manage Discounts</Button>
+          <Button onClick={() => navigate("startup-storefront")}>View Storefront</Button>
+        </div>
+      </div>
+      {/* Dashboard Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="customers">Customers</TabsTrigger>
+          <TabsTrigger value="support-structures">Support Structures</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
+          <RevenueSummary totalRevenue={kpis?.totalRevenue || 0} percentageChange={12.5} comparisonPeriod="last month" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Total Products</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <span className="text-2xl font-bold">{kpis?.totalProducts ?? 0}</span>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Total Orders</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <span className="text-2xl font-bold">{kpis?.totalOrders ?? 0}</span>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Total Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <span className="text-2xl font-bold">${kpis?.totalRevenue ?? 0}</span>
+              </CardContent>
+            </Card>
+          </div>
+          <SalesChart />
+        </TabsContent>
+        <TabsContent value="products">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-white">Product Management</h2>
+              <p className="text-slate-400">Manage your products and services</p>
+            </div>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Add Product
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.length === 0 ? (
+              <div className="col-span-full text-slate-400">No products found.</div>
+            ) : (
+              products.map((product: any) => (
+                <Card key={product.id} className="bg-slate-900 border-slate-800">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        <PackageIcon className="h-6 w-6 text-white" />
+                      </div>
+                      <Badge className={product.is_active ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-gray-500/20 text-gray-400 border-gray-500/30'}>
+                        {product.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                    <h3 className="text-white font-semibold mb-2">{product.name}</h3>
+                    <p className="text-slate-400 text-sm mb-4">{product.description}</p>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-2xl font-bold text-white">{formatCurrency(product.price)}</span>
+                      <span className="text-sm text-slate-400">{product.inventory ?? 0} in stock</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1 border-slate-700 text-slate-300">
+                        <EditIcon className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-slate-700 text-slate-300">
+                        <EyeIcon className="h-3 w-3" />
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-red-500/50 text-red-400">
+                        <Trash2Icon className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </TabsContent>
+        <TabsContent value="orders">
+          <OrdersManagement />
+        </TabsContent>
+        <TabsContent value="customers">
+          <CustomerManagement />
+        </TabsContent>
+        <TabsContent value="support-structures">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-white">Support Structure Partnerships</h2>
+            <p className="text-slate-400">Manage relationships with incubators and accelerators</p>
+          </div>
+          <div className="space-y-4">
+            {supportStructures.length === 0 ? (
+              <div className="text-slate-400">No support structure partnerships found.</div>
+            ) : (
+              supportStructures.map((link: any) => (
+                <Card key={link.id} className="bg-slate-900 border-slate-800">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+                          <Building2Icon className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-semibold">{link.supportStructure?.name}</h3>
+                          <p className="text-slate-400 text-sm capitalize">{link.supportStructure?.structure_type || ''}</p>
+                          <p className="text-xs text-slate-500 mt-1">{link.invitation_message}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge className={
+                          link.status === 'accepted' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                          link.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                          'bg-red-500/20 text-red-400 border-red-500/30'
+                        }>
+                          {link.status === 'accepted' ? <CheckCircleIcon className="h-3 w-3 mr-1" /> :
+                            link.status === 'pending' ? <ClockIcon className="h-3 w-3 mr-1" /> :
+                              <XCircleIcon className="h-3 w-3 mr-1" />}
+                          {link.status}
+                        </Badge>
+                        {link.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10">
+                              Reject
+                            </Button>
+                            <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                              Accept
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </TabsContent>
+        <TabsContent value="notifications">
+          <NotificationsPanel userId={startup?.id} />
+        </TabsContent>
+        <TabsContent value="settings">
+          <SettingsPanel user={startup} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -153,7 +284,7 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <Rocket className="h-8 w-8 text-white" />
+                <RocketIcon className="h-8 w-8 text-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">{startup?.name || "My Startup"}</h1>
@@ -170,11 +301,11 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline" className="border-slate-700 text-slate-300">
-                <Settings className="h-4 w-4 mr-2" />
+                <SettingsIcon className="h-4 w-4 mr-2" />
                 Settings
               </Button>
               <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
+                <PlusIcon className="h-4 w-4 mr-2" />
                 Add Product
               </Button>
             </div>
@@ -191,35 +322,35 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
                 value="overview" 
                 className="bg-transparent border-none text-slate-400 data-[state=active]:text-blue-400 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-400 rounded-none pb-3"
               >
-                <BarChart3 className="h-4 w-4 mr-2" />
+                  <BarChart3Icon className="h-4 w-4 mr-2" />
                 Overview
               </TabsTrigger>
               <TabsTrigger 
                 value="products" 
                 className="bg-transparent border-none text-slate-400 data-[state=active]:text-blue-400 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-400 rounded-none pb-3"
               >
-                <Package className="h-4 w-4 mr-2" />
+                  <PackageIcon className="h-4 w-4 mr-2" />
                 Products
               </TabsTrigger>
               <TabsTrigger 
                 value="partnerships" 
                 className="bg-transparent border-none text-slate-400 data-[state=active]:text-blue-400 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-400 rounded-none pb-3"
               >
-                <Building2 className="h-4 w-4 mr-2" />
+                  <Building2Icon className="h-4 w-4 mr-2" />
                 Partnerships
               </TabsTrigger>
               <TabsTrigger 
                 value="orders" 
                 className="bg-transparent border-none text-slate-400 data-[state=active]:text-blue-400 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-400 rounded-none pb-3"
               >
-                <ShoppingCart className="h-4 w-4 mr-2" />
+                  <ShoppingCartIcon className="h-4 w-4 mr-2" />
                 Orders
               </TabsTrigger>
               <TabsTrigger 
                 value="analytics" 
                 className="bg-transparent border-none text-slate-400 data-[state=active]:text-blue-400 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-400 rounded-none pb-3"
               >
-                <TrendingUp className="h-4 w-4 mr-2" />
+                  <TrendingUpIcon className="h-4 w-4 mr-2" />
                 Analytics
               </TabsTrigger>
             </TabsList>
@@ -236,7 +367,7 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
                           <p className="text-sm text-slate-400 mb-1">Total Products</p>
                           <p className="text-2xl font-bold text-white">{kpis?.totalProducts || 0}</p>
                         </div>
-                        <Package className="h-8 w-8 text-blue-400" />
+                        <PackageIcon className="h-8 w-8 text-blue-400" />
                       </div>
                       <p className="text-xs text-slate-500 mt-2">Active listings</p>
                     </CardContent>
@@ -249,7 +380,7 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
                           <p className="text-sm text-slate-400 mb-1">Total Revenue</p>
                           <p className="text-2xl font-bold text-white">{formatCurrency(kpis?.totalRevenue || 0)}</p>
                         </div>
-                        <DollarSign className="h-8 w-8 text-green-400" />
+                        <DollarSignIcon className="h-8 w-8 text-green-400" />
                       </div>
                       <p className="text-xs text-slate-500 mt-2">All-time earnings</p>
                     </CardContent>
@@ -262,7 +393,7 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
                           <p className="text-sm text-slate-400 mb-1">Total Orders</p>
                           <p className="text-2xl font-bold text-white">{kpis?.totalOrders || 0}</p>
                         </div>
-                        <ShoppingCart className="h-8 w-8 text-purple-400" />
+                        <ShoppingCartIcon className="h-8 w-8 text-purple-400" />
                       </div>
                       <p className="text-xs text-slate-500 mt-2">Completed orders</p>
                     </CardContent>
@@ -275,7 +406,7 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
                           <p className="text-sm text-slate-400 mb-1">Support Structures</p>
                           <p className="text-2xl font-bold text-white">{kpis?.structuresLinked || 0}</p>
                         </div>
-                        <Building2 className="h-8 w-8 text-orange-400" />
+                        <Building2Icon className="h-8 w-8 text-orange-400" />
                       </div>
                       <p className="text-xs text-slate-500 mt-2">Active partnerships</p>
                     </CardContent>
@@ -351,44 +482,48 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
                     <p className="text-slate-400">Manage your products and services</p>
                   </div>
                   <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="h-4 w-4 mr-2" />
+                    <PlusIcon className="h-4 w-4 mr-2" />
                     Add Product
                   </Button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {products.map((product) => (
-                    <Card key={product.id} className="bg-slate-900 border-slate-800">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                            <Package className="h-6 w-6 text-white" />
+                  {products.length === 0 ? (
+                    <div className="col-span-full text-slate-400">No products found.</div>
+                  ) : (
+                    products.map((product: any) => (
+                      <Card key={product.id} className="bg-slate-900 border-slate-800">
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                              <PackageIcon className="h-6 w-6 text-white" />
+                            </div>
+                            <Badge className={product.is_active ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-gray-500/20 text-gray-400 border-gray-500/30'}>
+                              {product.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
                           </div>
-                          <Badge className={product.is_active ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-gray-500/20 text-gray-400 border-gray-500/30'}>
-                            {product.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </div>
-                        <h3 className="text-white font-semibold mb-2">{product.name}</h3>
-                        <p className="text-slate-400 text-sm mb-4">{product.description}</p>
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="text-2xl font-bold text-white">{formatCurrency(product.price)}</span>
-                          <span className="text-sm text-slate-400">{product.stock_quantity} in stock</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="flex-1 border-slate-700 text-slate-300">
-                            <Edit className="h-3 w-3 mr-1" />
-                            Edit
-                          </Button>
-                          <Button variant="outline" size="sm" className="border-slate-700 text-slate-300">
-                            <Eye className="h-3 w-3" />
-                          </Button>
-                          <Button variant="outline" size="sm" className="border-red-500/50 text-red-400">
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          <h3 className="text-white font-semibold mb-2">{product.name}</h3>
+                          <p className="text-slate-400 text-sm mb-4">{product.description}</p>
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-2xl font-bold text-white">{formatCurrency(product.price)}</span>
+                            <span className="text-sm text-slate-400">{product.inventory ?? product.stock_quantity ?? 0} in stock</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="flex-1 border-slate-700 text-slate-300">
+                              <EditIcon className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button variant="outline" size="sm" className="border-slate-700 text-slate-300">
+                              <EyeIcon className="h-3 w-3" />
+                            </Button>
+                            <Button variant="outline" size="sm" className="border-red-500/50 text-red-400">
+                              <Trash2Icon className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               </TabsContent>
 
@@ -400,46 +535,50 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
                 </div>
 
                 <div className="space-y-4">
-                  {structureLinks.map((link) => (
-                    <Card key={link.id} className="bg-slate-900 border-slate-800">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                              <Building2 className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="text-white font-semibold">{link.structure.name}</h3>
-                              <p className="text-slate-400 text-sm capitalize">{link.structure.structure_type}</p>
-                              <p className="text-xs text-slate-500 mt-1">{link.invitation_message}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Badge className={
-                              link.status === 'accepted' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
-                              link.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
-                              'bg-red-500/20 text-red-400 border-red-500/30'
-                            }>
-                              {link.status === 'accepted' ? <CheckCircle className="h-3 w-3 mr-1" /> :
-                               link.status === 'pending' ? <Clock className="h-3 w-3 mr-1" /> :
-                               <XCircle className="h-3 w-3 mr-1" />}
-                              {link.status}
-                            </Badge>
-                            {link.status === 'pending' && (
-                              <div className="flex gap-2">
-                                <Button size="sm" variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10">
-                                  Reject
-                                </Button>
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                                  Accept
-                                </Button>
+                  {supportStructures.length === 0 ? (
+                    <div className="text-slate-400">No support structure partnerships found.</div>
+                  ) : (
+                    supportStructures.map((link: any) => (
+                      <Card key={link.id} className="bg-slate-900 border-slate-800">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+                                <Building2Icon className="h-6 w-6 text-white" />
                               </div>
-                            )}
+                              <div>
+                                <h3 className="text-white font-semibold">{link.supportStructure?.name}</h3>
+                                <p className="text-slate-400 text-sm capitalize">{link.supportStructure?.structure_type || ''}</p>
+                                <p className="text-xs text-slate-500 mt-1">{link.invitation_message}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Badge className={
+                                link.status === 'accepted' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                                link.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                                'bg-red-500/20 text-red-400 border-red-500/30'
+                              }>
+                                {link.status === 'accepted' ? <CheckCircleIcon className="h-3 w-3 mr-1" /> :
+                                  link.status === 'pending' ? <ClockIcon className="h-3 w-3 mr-1" /> :
+                                    <XCircleIcon className="h-3 w-3 mr-1" />}
+                                {link.status}
+                              </Badge>
+                              {link.status === 'pending' && (
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10">
+                                    Reject
+                                  </Button>
+                                  <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                                    Accept
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
                 </div>
               </TabsContent>
 
@@ -453,7 +592,7 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
                 <Card className="bg-slate-900 border-slate-800">
                   <CardContent className="p-6">
                     <div className="text-center py-8 text-slate-400">
-                      <ShoppingCart className="h-12 w-12 mx-auto mb-4" />
+                      <ShoppingCartIcon className="h-12 w-12 mx-auto mb-4" />
                       <p>Order management features coming soon</p>
                     </div>
                   </CardContent>
@@ -470,7 +609,7 @@ export function StartupDashboard({ user }: StartupDashboardProps) {
                 <Card className="bg-slate-900 border-slate-800">
                   <CardContent className="p-6">
                     <div className="text-center py-8 text-slate-400">
-                      <BarChart3 className="h-12 w-12 mx-auto mb-4" />
+                      <BarChart3Icon className="h-12 w-12 mx-auto mb-4" />
                       <p>Advanced analytics dashboard coming soon</p>
                     </div>
                   </CardContent>

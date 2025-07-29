@@ -29,6 +29,7 @@ interface HeaderProps {
 export function Header({ children }: HeaderProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  console.log('[Header] user', user);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Determine which dashboard path based on user role
@@ -175,7 +176,7 @@ export function Header({ children }: HeaderProps) {
                   <Button
                     variant="default"
                     size="sm"
-                    onClick={() => navigate("/auth")}
+                    onClick={() => navigate("/auth?mode=signup")}
                     className="flex gap-2 items-center"
                   >
                     <UserPlusIcon className="h-4 w-4" />
@@ -299,7 +300,7 @@ export function Header({ children }: HeaderProps) {
                       variant="default"
                       size="sm"
                       onClick={() => {
-                        navigate("/auth");
+                        navigate("/auth?mode=signup");
                         setIsMobileMenuOpen(false);
                       }}
                       className="justify-start w-full"

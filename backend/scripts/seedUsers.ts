@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/api/auth/register';
+const BASE_URL = 'http://localhost:5001/api/auth/register';
+console.log('Seeding users to:', BASE_URL);
 
 const users = [
   {
@@ -30,7 +31,7 @@ const users = [
   ...Array.from({ length: 12 }, (_, i) => ({
     email: `startup${i + 1}@ventures.com`,
     password: "StartupPass123!",
-    role: "Startup",
+    role: "Startup", // Ensure capital S
     name: `Startup ${i + 1}`
   })),
   ...Array.from({ length: 5 }, (_, i) => ({
@@ -44,10 +45,10 @@ const users = [
 const seed = async () => {
   for (const user of users) {
     try {
-      const res = await axios.post(BASE_URL, user);
-      console.log(`✅ ${user.email} registered`);
+      await axios.post(BASE_URL, user);
+      console.log(`✅ ${user.email} seeded`);
     } catch (err: any) {
-      console.error(`❌ ${user.email} failed:`, err.response?.data || err.message);
+      console.error(`❌ ${user.email} failed:`, err);
     }
   }
 };

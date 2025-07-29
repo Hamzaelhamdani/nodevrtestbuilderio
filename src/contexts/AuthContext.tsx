@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { authService } from "../services/authService";
+import { authService, getRedirectPath } from "../services/authService";
 import { AuthUser, UserRole } from "../types/database";
 
 interface AuthContextType {
@@ -34,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const initializeAuth = async () => {
     try {
       const currentUser = await authService.getCurrentUser();
+      console.log('[AuthContext] initializeAuth: currentUser', currentUser);
       setUser(currentUser);
     } catch (error) {
       // Only log if it's not a backend unavailable error
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       const currentUser = await authService.getCurrentUser();
+      console.log('[AuthContext] refreshUser: currentUser', currentUser);
       setUser(currentUser);
     } catch (error) {
       console.error("Error refreshing user:", error);
@@ -64,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.success && response.user) {
         setUser(response.user);
-
+        console.log('[AuthContext] login: response.user', response.user);
         // Auto-redirect based on role
         if (response.redirect_path) {
           navigate(response.redirect_path, { replace: true });
@@ -146,7 +148,7 @@ export function useRequireAuth(roles?: UserRole | UserRole[]) {
         navigate("/auth", { replace: true });
       } else if (roles && !authService.hasRole(user, roles)) {
         // Redirect to appropriate dashboard based on user role
-        const redirectPath = authService.getRedirectPath(user.role);
+        const redirectPath = getRedirectPath(user.role);
         navigate(redirectPath, { replace: true });
       }
     }
