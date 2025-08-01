@@ -108,7 +108,7 @@ export function Marketplace() {
       
       let productsArr = Array.isArray(result) ? result : (Array.isArray(result?.data) ? result.data : []);
       console.log('📦 Products loaded in Marketplace:', productsArr.length);
-      console.log('🔍 Sample products with categories:', productsArr.slice(0, 5).map(p => ({
+      console.log('🔍 Sample products with categories:', productsArr.slice(0, 5).map((p: any) => ({
         name: p.name,
         category: p.category,
         categoryType: typeof p.category
@@ -248,7 +248,7 @@ export function Marketplace() {
       // Try multiple matching strategies
       const exactMatch = productCategory === filterCategory;
       const includesMatch = productCategory.includes(filterCategory) || filterCategory.includes(productCategory);
-      const wordMatch = productCategory.split(' ').some(word => filterCategory.split(' ').includes(word));
+      const wordMatch = productCategory.split(' ').some((word: string) => filterCategory.split(' ').includes(word));
       
       const matchesCategory = selectedCategory === "all" || exactMatch || (filterCategory.length > 2 && includesMatch);
 

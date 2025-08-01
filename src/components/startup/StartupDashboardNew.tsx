@@ -299,10 +299,10 @@ export function StartupDashboardNew({ user }: { user: any }) {
                 fontWeight: '500'
               }}
               onMouseOver={(e) => {
-                e.target.style.backgroundColor = '#1d4ed8';
+                (e.target as HTMLElement).style.backgroundColor = '#1d4ed8';
               }}
               onMouseOut={(e) => {
-                e.target.style.backgroundColor = '#2563eb';
+                (e.target as HTMLElement).style.backgroundColor = '#2563eb';
               }}
             >
               🔄 Réessayer
@@ -327,10 +327,10 @@ export function StartupDashboardNew({ user }: { user: any }) {
                 fontWeight: '500'
               }}
               onMouseOver={(e) => {
-                e.target.style.backgroundColor = '#15803d';
+                (e.target as HTMLElement).style.backgroundColor = '#15803d';
               }}
               onMouseOut={(e) => {
-                e.target.style.backgroundColor = '#16a34a';
+                (e.target as HTMLElement).style.backgroundColor = '#16a34a';
               }}
             >
               ✅ Effacer l'erreur
@@ -367,10 +367,10 @@ export function StartupDashboardNew({ user }: { user: any }) {
                 fontWeight: '500'
               }}
               onMouseOver={(e) => {
-                e.target.style.backgroundColor = '#6d28d9';
+                (e.target as HTMLElement).style.backgroundColor = '#6d28d9';
               }}
               onMouseOut={(e) => {
-                e.target.style.backgroundColor = '#7c3aed';
+                (e.target as HTMLElement).style.backgroundColor = '#7c3aed';
               }}
             >
               🚀 Afficher le Dashboard
@@ -1327,7 +1327,6 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
                 Category
               </label>
               {/* Liste dynamique des catégories, identique à Marketplace */}
-              {console.log('🔍 ProductModal: Current formData.category:', formData.category)}
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
