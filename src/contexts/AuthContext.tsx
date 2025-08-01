@@ -21,7 +21,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const me = await authService.fetchMe();
         setUser(me);
-      } catch {
+      } catch (error) {
+        // Silently handle authentication errors on initial load
+        // This is expected when user is not logged in
         setUser(null);
       }
     })();

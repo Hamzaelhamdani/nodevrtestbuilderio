@@ -43,13 +43,17 @@ class ApiClient {
   }
 
   async get<T=any>(endpoint: string, params?: Record<string,any>): Promise<T> {
-    const url = new URL(this.baseURL + endpoint, window.location.origin);
+    let url = `${this.baseURL}/${endpoint}`.replace(/\/+/g, '/');
+    
     if (params) {
+      const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([k,v]) => {
-        if (v!=null) url.searchParams.append(k, String(v));
+        if (v!=null) searchParams.append(k, String(v));
       });
+      url += `?${searchParams.toString()}`;
     }
-    const res = await fetch(url.toString(), {
+    
+    const res = await fetch(url, {
       method: 'GET',
       headers: this.getHeaders(),
       credentials: 'include',
@@ -58,11 +62,33 @@ class ApiClient {
   }
 
   async post<T=any>(endpoint: string, data?: any): Promise<T> {
-    const res = await fetch(this.baseURL + endpoint, {
+    const url = `${this.baseURL}/${endpoint}`.replace(/\/+/g, '/');
+    const res = await fetch(url, {
       method: 'POST',
       headers: this.getHeaders(),
       credentials: 'include',
       body: data ? JSON.stringify(data) : undefined,
+    });
+    return this.handleResponse<T>(res);
+  }
+
+  async put<T=any>(endpoint: string, data?: any): Promise<T> {
+    const url = `${this.baseURL}/${endpoint}`.replace(/\/+/g, '/');
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: this.getHeaders(),
+      credentials: 'include',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    return this.handleResponse<T>(res);
+  }
+
+  async delete<T=any>(endpoint: string): Promise<T> {
+    const url = `${this.baseURL}/${endpoint}`.replace(/\/+/g, '/');
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+      credentials: 'include',
     });
     return this.handleResponse<T>(res);
   }

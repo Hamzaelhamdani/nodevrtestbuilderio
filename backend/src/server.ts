@@ -2,11 +2,14 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 import authRoutes from './routes/authRoutes.js';
 import meRoute from './routes/meRoute.js';
 import startupRoutes from './routes/startupRoutes.js';
 import structureRoutes from './routes/structureRoutes.js';
+import productRoutes from './routes/products.js';
+import dashboardRoutes from './routes/dashboard.js';
 import { authenticateToken } from './middleware/authMiddleware.js';
 
 dotenv.config();
@@ -15,19 +18,17 @@ const app = express();
 
 // ✅ Activer CORS pour le frontend
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true
 }));
 
-// ✅ Parser le JSON
+// ✅ Parser le JSON et les cookies
 app.use(express.json());
+app.use(cookieParser());
 
 // ——— Routes Auth ———
 // Inscription & connexion
 app.use('/api/auth', authRoutes);
-
-// Récupérer le user courant via JWT
-app.use('/api/auth/me', authenticateToken, meRoute);
 
 // ——— Autres Routes ———
 // Liste des startups (publique ou protégée selon besoin)
@@ -35,6 +36,12 @@ app.use('/api/startups', startupRoutes);
 
 // Liste des support structures
 app.use('/api/structures', structureRoutes);
+
+// Routes produits (protégées)
+app.use('/api/products', productRoutes);
+
+// Routes dashboard (protégées)
+app.use('/api', dashboardRoutes);
 
 console.log('✅ Routes chargées avec succès');
 console.log('✅ Environnement chargé, lancement du serveur...');

@@ -32,19 +32,16 @@ export const authService = {
     try {
       const payload = await apiClient.post<{
         user: AuthUser
-        token: string
+        token?: string
         redirect_path?: string
         message?: string
-      }>('/auth/login', { email, password })
+      }>('auth/login', { email, password })
 
-      if (!payload.token) {
-        return {
-          success: false,
-          message: payload.message || 'Login failed',
-        }
+      // Si le backend renvoie un token, on l'utilise
+      if (payload.token) {
+        apiClient.setAuthToken(payload.token)
       }
 
-      apiClient.setAuthToken(payload.token)
       return {
         success: true,
         user: payload.user,
@@ -74,7 +71,7 @@ export const authService = {
         token: string
         redirect_path?: string
         message?: string
-      }>('/auth/register', data)
+      }>('auth/register', data)
 
       if (!payload.token) {
         return {
@@ -107,12 +104,13 @@ export const authService = {
         success: boolean
         data: AuthUser
         message?: string
-      }>('/auth/me')
+      }>('auth/me')
       if (!res.success || !res.data) {
         throw new Error(res.message || 'Could not fetch user')
       }
       return res.data
-    } catch {
+    } catch (error) {
+      // Silently return null for auth errors (expected when not logged in)
       return null
     }
   },

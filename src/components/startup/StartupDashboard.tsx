@@ -42,6 +42,20 @@ import { ProductServiceView } from "./ProductServiceView";
 import { RevenueSummary } from "./RevenueSummary";
 import { SalesChart } from "./SalesChart";
 
+// Interface temporaire pour les produits
+interface ProductService {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  images: string[];
+  tags: string[];
+  isActive: boolean;
+  stock: number;
+  category: string;
+  highlights: string[];
+}
+
 // Utility function for formatting currency
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('en-US', {
@@ -53,6 +67,9 @@ function formatCurrency(amount: number) {
 
 // Log when StartupDashboard mounts and receives user
 export function StartupDashboard({ user, navigate }: any) {
+  console.log('[StartupDashboard] Composant rendu, user:', user);
+  console.log('[StartupDashboard] navigate function:', typeof navigate);
+  
   useEffect(() => {
     console.log('[StartupDashboard] mounted, user:', user);
   }, [user]);
@@ -68,6 +85,11 @@ export function StartupDashboard({ user, navigate }: any) {
   const [error, setError] = useState<string | null>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [supportStructures, setSupportStructures] = useState<any[]>([]);
+  
+  // États pour la gestion des produits
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [viewingProduct, setViewingProduct] = useState<any>(null);
 
   useEffect(() => {
     console.log('[StartupDashboard] mounted, user:', user);
@@ -94,6 +116,53 @@ export function StartupDashboard({ user, navigate }: any) {
     };
     fetchAll();
   }, [user]);
+
+  // Fonctions de gestion des produits
+  const handleAddProduct = () => {
+    console.log('handleAddProduct appelé');
+    console.log('Etats actuels:', { showProductModal, editingProduct, viewingProduct });
+    setEditingProduct(null);
+    setShowProductModal(true);
+    console.log('Nouveaux états:', { showProductModal: true, editingProduct: null });
+  };
+
+  const handleEditProduct = (product: any) => {
+    console.log('handleEditProduct appelé avec:', product);
+    setEditingProduct(product);
+    setShowProductModal(true);
+  };
+
+  const handleViewProduct = (product: any) => {
+    console.log('handleViewProduct appelé avec:', product);
+    setViewingProduct(product);
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    console.log('handleDeleteProduct appelé avec ID:', productId);
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+      return;
+    }
+    
+    try {
+      await apiClient.delete(`/startups/products/${productId}`);
+      setProducts(products.filter(p => p.id !== productId));
+      alert('Produit supprimé avec succès');
+    } catch (err: any) {
+      alert('Erreur lors de la suppression: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  const handleProductSaved = (savedProduct: any) => {
+    if (editingProduct) {
+      // Mise à jour
+      setProducts(products.map(p => p.id === savedProduct.id ? savedProduct : p));
+    } else {
+      // Ajout
+      setProducts([...products, savedProduct]);
+    }
+    setShowProductModal(false);
+    setEditingProduct(null);
+  };
 
   if (loading) {
     return <div className="container max-w-7xl mx-auto px-4 py-8">Loading dashboard...</div>;
@@ -164,10 +233,20 @@ export function StartupDashboard({ user, navigate }: any) {
               <h2 className="text-xl font-bold text-white">Product Management</h2>
               <p className="text-slate-400">Manage your products and services</p>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <button 
+              onClick={handleAddProduct}
+              className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-all duration-200"
+              style={{ 
+                position: 'relative',
+                zIndex: 9999,
+                pointerEvents: 'auto',
+                cursor: 'pointer',
+                userSelect: 'none'
+              }}
+            >
               <PlusIcon className="h-4 w-4 mr-2" />
               Add Product
-            </Button>
+            </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.length === 0 ? (
@@ -191,16 +270,46 @@ export function StartupDashboard({ user, navigate }: any) {
                       <span className="text-sm text-slate-400">{product.inventory ?? 0} in stock</span>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 border-slate-700 text-slate-300">
+                      <button 
+                        onClick={() => handleEditProduct(product)}
+                        className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm border border-slate-700 text-slate-300 bg-transparent hover:bg-slate-800 rounded-md font-medium transition-all duration-200"
+                        style={{ 
+                          position: 'relative',
+                          zIndex: 9999,
+                          pointerEvents: 'auto',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                      >
                         <EditIcon className="h-3 w-3 mr-1" />
                         Edit
-                      </Button>
-                      <Button variant="outline" size="sm" className="border-slate-700 text-slate-300">
+                      </button>
+                      <button 
+                        onClick={() => handleViewProduct(product)}
+                        className="inline-flex items-center justify-center px-3 py-2 text-sm border border-slate-700 text-slate-300 bg-transparent hover:bg-slate-800 rounded-md font-medium transition-all duration-200"
+                        style={{ 
+                          position: 'relative',
+                          zIndex: 9999,
+                          pointerEvents: 'auto',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                      >
                         <EyeIcon className="h-3 w-3" />
-                      </Button>
-                      <Button variant="outline" size="sm" className="border-red-500/50 text-red-400">
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteProduct(product.id)}
+                        className="inline-flex items-center justify-center px-3 py-2 text-sm border border-red-500/50 text-red-400 bg-transparent hover:bg-red-500/10 rounded-md font-medium transition-all duration-200"
+                        style={{ 
+                          position: 'relative',
+                          zIndex: 9999,
+                          pointerEvents: 'auto',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                      >
                         <Trash2Icon className="h-3 w-3" />
-                      </Button>
+                      </button>
                     </div>
                   </CardContent>
                 </Card>
@@ -278,6 +387,59 @@ export function StartupDashboard({ user, navigate }: any) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+      {/* BOUTON DE TEST ABSOLUMENT POSITIONNÉ */}
+      <button 
+        onClick={() => {
+          alert('BOUTON DE TEST FONCTIONNE !');
+          console.log('BOUTON DE TEST ABSOLU CLIQUÉ !');
+        }}
+        style={{
+          position: 'fixed',
+          top: '50px',
+          right: '50px',
+          zIndex: 999999,
+          backgroundColor: 'lime',
+          color: 'black',
+          padding: '20px 30px',
+          border: '5px solid red',
+          fontSize: '20px',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          borderRadius: '10px',
+          boxShadow: '0 0 20px rgba(0,255,0,0.8)'
+        }}
+      >
+        CLIQUEZ ICI TEST
+      </button>
+
+      {/* BOUTON DE TEST - A SUPPRIMER */}
+      <div style={{ 
+        position: 'fixed', 
+        top: '10px', 
+        left: '10px', 
+        zIndex: 9999, 
+        backgroundColor: 'red', 
+        padding: '10px',
+        borderRadius: '5px'
+      }}>
+        <button 
+          onClick={() => {
+            console.log('BOUTON DE TEST CLIQUÉ !');
+            alert('Bouton de test fonctionne !');
+          }}
+          style={{ 
+            backgroundColor: 'yellow', 
+            color: 'black', 
+            padding: '5px 10px', 
+            border: 'none', 
+            borderRadius: '3px',
+            cursor: 'pointer'
+          }}
+        >
+          TEST CLICK
+        </button>
+      </div>
+      
       {/* Header */}
       <div className="border-b border-slate-800 bg-slate-900/50">
         <div className="container mx-auto px-6 py-6">
@@ -304,10 +466,15 @@ export function StartupDashboard({ user, navigate }: any) {
                 <SettingsIcon className="h-4 w-4 mr-2" />
                 Settings
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <button 
+                onClick={handleAddProduct}
+                onMouseEnter={() => console.log('Survol du bouton Add Product')}
+                className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-all duration-200"
+                style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 1000 }}
+              >
                 <PlusIcon className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
+                Add Product (TEST)
+              </button>
             </div>
           </div>
         </div>
@@ -481,10 +648,15 @@ export function StartupDashboard({ user, navigate }: any) {
                     <h2 className="text-xl font-bold text-white">Product Management</h2>
                     <p className="text-slate-400">Manage your products and services</p>
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <button 
+                    onClick={handleAddProduct}
+                    onMouseEnter={() => console.log('Survol du bouton Add Product dans la section')}
+                    className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-all duration-200"
+                    style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 1000 }}
+                  >
                     <PlusIcon className="h-4 w-4 mr-2" />
-                    Add Product
-                  </Button>
+                    Add Product (TEST)
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -509,16 +681,31 @@ export function StartupDashboard({ user, navigate }: any) {
                             <span className="text-sm text-slate-400">{product.inventory ?? product.stock_quantity ?? 0} in stock</span>
                           </div>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="flex-1 border-slate-700 text-slate-300">
+                            <button 
+                              onClick={() => handleEditProduct(product)}
+                              onMouseEnter={() => console.log('Survol Edit:', product.name)}
+                              className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm border border-slate-700 text-slate-300 bg-transparent hover:bg-slate-800 rounded-md font-medium transition-all duration-200"
+                              style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 1000 }}
+                            >
                               <EditIcon className="h-3 w-3 mr-1" />
-                              Edit
-                            </Button>
-                            <Button variant="outline" size="sm" className="border-slate-700 text-slate-300">
+                              Edit (TEST)
+                            </button>
+                            <button 
+                              onClick={() => handleViewProduct(product)}
+                              onMouseEnter={() => console.log('Survol View:', product.name)}
+                              className="inline-flex items-center justify-center px-3 py-2 text-sm border border-slate-700 text-slate-300 bg-transparent hover:bg-slate-800 rounded-md font-medium transition-all duration-200"
+                              style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 1000 }}
+                            >
                               <EyeIcon className="h-3 w-3" />
-                            </Button>
-                            <Button variant="outline" size="sm" className="border-red-500/50 text-red-400">
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteProduct(product.id)}
+                              onMouseEnter={() => console.log('Survol Delete:', product.name)}
+                              className="inline-flex items-center justify-center px-3 py-2 text-sm border border-red-500/50 text-red-400 bg-transparent hover:bg-red-500/10 rounded-md font-medium transition-all duration-200"
+                              style={{ pointerEvents: 'auto', cursor: 'pointer', zIndex: 1000 }}
+                            >
                               <Trash2Icon className="h-3 w-3" />
-                            </Button>
+                            </button>
                           </div>
                         </CardContent>
                       </Card>
@@ -619,6 +806,45 @@ export function StartupDashboard({ user, navigate }: any) {
           </Tabs>
         </div>
       </div>
+
+      {/* Modals */}
+      {showProductModal && (
+        <ProductServiceEdit
+          product={editingProduct || {
+            id: '',
+            name: '',
+            description: '',
+            price: 0,
+            images: [],
+            tags: [],
+            isActive: true,
+            stock: 0,
+            category: '',
+            highlights: []
+          }}
+          open={showProductModal}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowProductModal(false);
+              setEditingProduct(null);
+            }
+          }}
+          onSave={handleProductSaved}
+        />
+      )}
+
+      {viewingProduct && (
+        <ProductServiceView
+          data={viewingProduct}
+          type="product"
+          open={!!viewingProduct}
+          onOpenChange={(open) => {
+            if (!open) {
+              setViewingProduct(null);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

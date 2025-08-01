@@ -2,6 +2,7 @@
 import { Request, Response } from "express";
 import { PrismaClient, Role } from "@prisma/client";
 import { hashPassword, comparePasswords } from "../utils/hash";
+import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
@@ -14,6 +15,17 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 if (!JWT_SECRET) {
   throw new Error("❌ Missing JWT_SECRET in environment");
 }
+
+// Mapper le rôle Prisma vers le rôle frontend
+const mapPrismaRoleToFrontend = (prismaRole: Role): string => {
+  switch (prismaRole) {
+    case Role.Client: return 'client';
+    case Role.Admin: return 'admin';
+    case Role.Startup: return 'startup';
+    case Role.SupportStructure: return 'structure';
+    default: return 'client';
+  }
+};
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -58,7 +70,13 @@ export const register = async (req: Request, res: Response) => {
 
     // Enlever le mot de passe avant de répondre
     // @ts-ignore
-    const { password: _, ...safeUser } = user;
+    const { password: _, ...userWithoutPassword } = user;
+    
+    const safeUser = {
+      ...userWithoutPassword,
+      role: mapPrismaRoleToFrontend(user.role),
+      full_name: userWithoutPassword.name  // Mapper name vers full_name pour le frontend
+    };
 
     // Set JWT as HttpOnly cookie
     res.cookie('token', token, {
@@ -69,7 +87,8 @@ export const register = async (req: Request, res: Response) => {
     });
     res.status(201).json({
       message: "User registered",
-      user: safeUser
+      user: safeUser,
+      token
     });
   } catch (error: any) {
     console.error("❌ Registration Error:", error);
@@ -109,7 +128,13 @@ export const login = async (req: Request, res: Response) => {
 
     // Enlever le mot de passe avant de répondre
     // @ts-ignore
-    const { password: _, ...safeUser } = user;
+    const { password: _, ...userWithoutPassword } = user;
+    
+    const safeUser = {
+      ...userWithoutPassword,
+      role: mapPrismaRoleToFrontend(user.role),
+      full_name: userWithoutPassword.name  // Mapper name vers full_name pour le frontend
+    };
 
     // Set JWT as HttpOnly cookie
     res.cookie('token', token, {
@@ -120,10 +145,48 @@ export const login = async (req: Request, res: Response) => {
     });
     res.status(200).json({
       message: "Login successful",
-      user: safeUser
+      user: safeUser,
+      token
     });
   } catch (error: any) {
     console.error("❌ Login Error:", error);
     res.status(500).json({ message: "Login failed", error: error.message });
+  }
+};
+
+export const me = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    // Le middleware auth doit avoir ajouté req.userId
+    const userId = req.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ message: "Missing or invalid token" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Enlever le mot de passe
+    // @ts-ignore
+    const { password: _, ...userWithoutPassword } = user;
+    
+    const safeUser = {
+      ...userWithoutPassword,
+      role: mapPrismaRoleToFrontend(user.role),
+      full_name: userWithoutPassword.name  // Mapper name vers full_name pour le frontend
+    };
+
+    res.json({
+      success: true,
+      data: safeUser
+    });
+  } catch (error: any) {
+    console.error("❌ Me Error:", error);
+    res.status(500).json({ message: "Failed to get user", error: error.message });
   }
 };

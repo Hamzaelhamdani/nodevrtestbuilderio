@@ -12,7 +12,7 @@ import { VentureRoomClub } from "./components/club/VentureRoomClub";
 import { PaymentSystem } from "./components/payments/PaymentSystem";
 import { CommunityDiscounts } from "./components/community/CommunityDiscounts";
 import { AdminPortal } from "./components/admin/AdminPortal";
-import { StartupDashboard } from "./components/startup/StartupDashboard";
+import { StartupDashboardNew } from "./components/startup/StartupDashboardNew";
 import { SupportStructureDashboard } from "./components/support-structure/SupportStructureDashboard";
 
 
@@ -30,9 +30,11 @@ import { StartupStorefrontListing } from "./components/startup/StartupStorefront
 import { AllStartupsPage } from "./components/startup/AllStartupsPage";
 import { StartupDetailPage } from "./components/startup/StartupDetailPage";
 import { AllSupportStructuresPage } from "./components/support-structure/AllSupportStructuresPage";
+import { AuthDebug } from "./components/debug/AuthDebug";
 
 import { useEffect, useState } from "react";
 import { startupService } from "./services/startupService";
+import { useNavigate } from "react-router-dom";
 
 // Animation variants for page transitions
 const pageVariants = {
@@ -75,14 +77,18 @@ function StartupsPage() {
   return <StartupStorefrontListing startups={startups} />;
 }
 
+function StartupDashboardWrapper({ user }: { user: any }) {
+  return <StartupDashboardNew user={user} />;
+}
+
 function RedirectToOwnDashboard() {
   const { user } = useAuth();
   const role = user?.role.toLowerCase();
   const map: Record<string,string> = {
-    startup:        "/dashboard/startup",
-    supportstructure: "/dashboard/structure",
-    admin:          "/dashboard/admin",
-    client:         "/dashboard/client",
+    startup:   "/dashboard/startup",
+    structure: "/dashboard/structure",
+    admin:     "/dashboard/admin",
+    client:    "/dashboard/client",
   };
   return <Navigate to={map[role!] ?? "/"} replace />;
 }
@@ -114,7 +120,7 @@ function AppRoutesWithUser() {
       {/* Startup */}
       <Route path="/dashboard/startup/*" element={
         <StartupRoute>
-          <AnimatedRoute><StartupDashboard user={user!} /></AnimatedRoute>
+          <AnimatedRoute><StartupDashboardWrapper user={user!} /></AnimatedRoute>
         </StartupRoute>
       } />
 
