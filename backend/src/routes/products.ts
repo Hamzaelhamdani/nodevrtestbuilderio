@@ -4,7 +4,9 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  getProduct
+  getProduct,
+  getAllProducts,
+  getAllCategories
 } from '../controllers/productController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -13,7 +15,10 @@ const router = Router();
 // Temporarily disable auth for development - REMOVE IN PRODUCTION
 // router.use(authenticateToken);
 
+
 // Product routes
+router.get('/all', getAllProducts); // Marketplace: all products, all startups
+router.get('/categories', getAllCategories); // Debug: get all categories
 router.get('/', getProducts);
 router.post('/', createProduct);  // Development mode - auth handled in controller
 router.get('/:id', getProduct);

@@ -30,6 +30,7 @@ interface Product {
   status: 'active' | 'inactive';
   category: string;
   created_at: string;
+  images?: string[]; // Add images field
 }
 
 interface Order {
@@ -89,26 +90,64 @@ export function StartupDashboardNew({ user }: { user: any }) {
 
   // Load dashboard data
   useEffect(() => {
-    // Disable automatic data fetching to prevent console errors
-    // Data will only be loaded manually via the retry button
-    console.log('🔄 Dashboard initialized with empty data to prevent API errors');
-    console.log('🔍 User context:', user);
-    
-    // Set empty data immediately
-    setLoading(false);
-    setError(null);
-    setProducts([]);
-    setOrders([]);
-    setCustomers([]);
-    setStats({
-      totalRevenue: 0,
-      revenueGrowth: 0,
-      averageOrderValue: 0,
-      avgOrderGrowth: 0,
-      totalProducts: 0,
-      totalOrders: 0
-    });
-  }, []); // Only run once on mount
+    const loadDashboardData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        console.log('🔄 Loading dashboard data automatically...');
+        console.log('🔍 User context:', user);
+        
+        // Fetch all data in parallel
+        const [productsRes, ordersRes, customersRes] = await Promise.all([
+          apiClient.get('products'),
+          apiClient.get('orders'),
+          apiClient.get('customers')
+        ]);
+
+        console.log('✅ API responses received:', { productsRes, ordersRes, customersRes });
+
+        setProducts(productsRes.data || []);
+        setOrders(ordersRes.data || []);
+        setCustomers(customersRes.data || []);
+
+        // Calculate stats
+        const totalRevenue = ordersRes.data?.reduce((sum: number, order: Order) => sum + order.total_amount, 0) || 0;
+        const totalOrders = ordersRes.data?.length || 0;
+        const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+        setStats({
+          totalRevenue,
+          revenueGrowth: 12.3, // Mock growth data
+          averageOrderValue: avgOrderValue,
+          avgOrderGrowth: 8.7, // Mock growth data
+          totalProducts: productsRes.data?.length || 0,
+          totalOrders
+        });
+
+      } catch (err: any) {
+        console.error('❌ Auto-load failed:', err);
+        setError(err.message || 'Failed to load dashboard data');
+        
+        // Set empty data on error
+        setProducts([]);
+        setOrders([]);
+        setCustomers([]);
+        setStats({
+          totalRevenue: 0,
+          revenueGrowth: 0,
+          averageOrderValue: 0,
+          avgOrderGrowth: 0,
+          totalProducts: 0,
+          totalOrders: 0
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [user]); // Reload when user changes
 
   // Manual retry function
   const handleRetry = async () => {
@@ -344,70 +383,6 @@ export function StartupDashboardNew({ user }: { user: any }) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      {/* Header */}
-      <header className="bg-slate-900 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold">
-                <span className="text-green-400">VENTURES</span>
-                <span className="text-white">ROOM</span>
-              </h1>
-            </div>
-
-            {/* Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <button 
-                onClick={() => navigate('/marketplace')}
-                className="text-slate-300 hover:text-white transition-colors"
-              >
-                Marketplace
-              </button>
-              <button 
-                onClick={() => navigate('/startups')}
-                className="text-slate-300 hover:text-white transition-colors"
-              >
-                Startups
-              </button>
-              <button 
-                onClick={() => navigate('/structures')}
-                className="text-slate-300 hover:text-white transition-colors"
-              >
-                Support Structures
-              </button>
-              <button 
-                onClick={() => navigate('/club')}
-                className="text-slate-300 hover:text-white transition-colors"
-              >
-                Club
-              </button>
-            </nav>
-
-            {/* User Menu */}
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-slate-400">
-                Welcome, {user?.name || user?.email}
-              </span>
-              <div className="flex items-center space-x-2">
-                <button className="p-2 text-slate-400 hover:text-white transition-colors">
-                  <UserIcon className="h-5 w-5" />
-                </button>
-                <button 
-                  onClick={() => {
-                    // Logout logic here
-                    navigate('/auth/login');
-                  }}
-                  className="p-2 text-slate-400 hover:text-red-400 transition-colors"
-                >
-                  <LogOutIcon className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Dashboard Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Title */}
@@ -495,6 +470,17 @@ export function StartupDashboardNew({ user }: { user: any }) {
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
               >
                 🔄 Load Data from API
+              </button>
+              <button
+                onClick={() => {
+                  // Test direct image access
+                  const testUrl = 'http://localhost:5003/api/uploads/images/product-1754075073639-987628845.jpeg';
+                  console.log('🧪 Testing image URL:', testUrl);
+                  window.open(testUrl, '_blank');
+                }}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-colors"
+              >
+                🧪 Test Image
               </button>
             </div>
           </div>
@@ -621,12 +607,26 @@ export function StartupDashboardNew({ user }: { user: any }) {
                 const response = await apiClient.put(`products/${editingProduct.id}`, productData);
                 console.log('✅ Update response:', response);
                 setProducts(products.map(p => p.id === editingProduct.id ? response.data : p));
+                
+                // Signal marketplace to refresh
+                localStorage.setItem('marketplace-refresh', 'true');
+                window.dispatchEvent(new StorageEvent('storage', {
+                  key: 'marketplace-refresh',
+                  newValue: 'true'
+                }));
               } else {
                 // Create new product
                 console.log('➕ Creating new product');
                 const response = await apiClient.post('products', productData);
                 console.log('✅ Create response:', response);
                 setProducts([response.data, ...products]);
+                
+                // Signal marketplace to refresh
+                localStorage.setItem('marketplace-refresh', 'true');
+                window.dispatchEvent(new StorageEvent('storage', {
+                  key: 'marketplace-refresh',
+                  newValue: 'true'
+                }));
               }
               setShowProductModal(false);
               setEditingProduct(null);
@@ -697,9 +697,83 @@ function ProductCard({
   onDelete: () => void;
   formatCurrency: (amount: number) => string;
 }) {
+  // Helper function to get full image URL
+  const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return null;
+    
+    // If it's already a full URL, return as is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    
+    // If it's a relative URL starting with /api, construct full URL to bypass proxy issues
+    if (imageUrl.startsWith('/api/')) {
+      return `http://localhost:5003${imageUrl}`;
+    }
+    
+    // If it's just a filename, construct full URL
+    return `http://localhost:5003/api/uploads/images/${imageUrl}`;
+  };
+
+  // Debug logging
+  console.log('🔍 ProductCard Debug for:', product.name);
+  console.log('📸 Product images:', product.images);
+  console.log('🔗 First image URL:', product.images?.[0]);
+  console.log('🌐 Processed URL:', product.images?.[0] ? getImageUrl(product.images[0]) : 'No image');
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-      <div className="flex items-start justify-between mb-4">
+      {/* Product Image */}
+      {product.images && product.images.length > 0 ? (
+        <div className="mb-4">
+          <img
+            src={getImageUrl(product.images[0]) || ''}
+            alt={product.name}
+            className="w-full aspect-[16/9] object-cover rounded-xl bg-slate-800 border border-slate-700 shadow"
+            onLoad={() => {
+              console.log('✅ Image loaded successfully for:', product.name);
+            }}
+            onError={(e) => {
+              console.error('❌ Image failed to load for:', product.name);
+              console.error('❌ Failed URL:', getImageUrl(product.images?.[0] || ''));
+              // Hide the image if it fails to load
+              e.currentTarget.style.display = 'none';
+              const fallbackIcon = e.currentTarget.parentElement?.querySelector('.fallback-icon');
+              if (fallbackIcon) {
+                fallbackIcon.classList.remove('hidden');
+              }
+            }}
+          />
+          {/* Fallback icon (hidden by default) */}
+          <div className="fallback-icon hidden h-32 bg-slate-800 rounded-lg flex items-center justify-center">
+            <PackageIcon className="h-8 w-8 text-slate-600" />
+          </div>
+          {product.images.length > 1 && (
+            <div className="flex mt-2 space-x-1">
+              {product.images.slice(1, 4).map((image, index) => (
+                <img
+                  key={index}
+                  src={getImageUrl(image) || ''}
+                  alt={`${product.name} ${index + 2}`}
+                  className="w-8 h-8 object-cover rounded border border-slate-600"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ))}
+              {product.images.length > 4 && (
+                <div className="w-8 h-8 bg-slate-700 rounded border border-slate-600 flex items-center justify-center">
+                  <span className="text-xs text-slate-400">+{product.images.length - 4}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="mb-4 h-32 bg-slate-800 rounded-lg flex items-center justify-center">
+          <PackageIcon className="h-8 w-8 text-slate-600" />
+        </div>
+      )}      <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
             <PackageIcon className="h-5 w-5 text-white" />
@@ -893,9 +967,100 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
     type: 'Physical'
   });
   const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+
+  // Handle image upload with compression
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Limit to 5 images maximum
+    const totalImages = images.length + existingImages.length;
+    const remainingSlots = 5 - totalImages;
+    const filesToAdd = files.slice(0, remainingSlots);
+
+    // Compress and resize images before adding
+    filesToAdd.forEach(async (file) => {
+      // Check file size (limit to 2MB per file)
+      if (file.size > 2 * 1024 * 1024) {
+        alert(`Image ${file.name} is too large. Please select images smaller than 2MB.`);
+        return;
+      }
+
+      const compressedFile = await compressImage(file, 800, 600, 0.7); // Compress to max 800x600 with 70% quality
+      setImages(prev => [...prev, compressedFile]);
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreviewUrls(prev => [...prev, e.target?.result as string]);
+      };
+      reader.readAsDataURL(compressedFile);
+    });
+  };
+
+  // Image compression function
+  const compressImage = (file: File, maxWidth: number, maxHeight: number, quality: number): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height;
+            height = maxHeight;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg', // Convert to JPEG for better compression
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          } else {
+            resolve(file); // Fallback to original if compression fails
+          }
+        }, 'image/jpeg', quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Remove image
+  const removeImage = (index: number, isExisting: boolean = false) => {
+    if (isExisting) {
+      setExistingImages(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setImages(prev => prev.filter((_, i) => i !== index));
+      setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
+    }
+  };
 
   useEffect(() => {
     if (product) {
+      console.log('🔍 ProductModal: Received product for editing:', product);
+      console.log('🔍 ProductModal: Product category:', product.category);
       setFormData({
         name: product.name || '',
         description: product.description || '',
@@ -904,6 +1069,11 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
         category: product.category || 'General',
         type: 'Physical'
       });
+      console.log('🔍 ProductModal: Form initialized with category:', product.category || 'General');
+      // Reset images for existing product editing
+      setImages([]);
+      setImagePreviewUrls([]);
+      setExistingImages(product.images || []); // Load existing images
     } else {
       setFormData({
         name: '',
@@ -913,6 +1083,10 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
         category: 'General',
         type: 'Physical'
       });
+      // Reset images for new product
+      setImages([]);
+      setImagePreviewUrls([]);
+      setExistingImages([]);
     }
   }, [product]);
 
@@ -926,14 +1100,59 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
 
     setLoading(true);
     try {
-      await onSave({
+      let imageUrls: string[] = [...existingImages]; // Keep existing images
+
+      // DEBUG: Affiche la catégorie sélectionnée
+      console.log('Catégorie envoyée au backend :', formData.category);
+
+      // Upload new images if any
+      if (images.length > 0) {
+        console.log('📤 Uploading images...');
+        
+        // Option 1: Upload to a temporary backend endpoint
+        const uploadPromises = images.map(async (file) => {
+          const formData = new FormData();
+          formData.append('image', file);
+          
+          const response = await fetch('/api/upload-image', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Image upload failed: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          return data.filename;
+        });
+        
+        try {
+          const newImageUrls = await Promise.all(uploadPromises);
+          imageUrls = [...imageUrls, ...newImageUrls];
+          console.log('✅ Images uploaded successfully:', newImageUrls);
+        } catch (uploadError) {
+          console.warn('⚠️ Image upload failed, creating product without images:', uploadError);
+          // Continue with product creation even if image upload fails
+        }
+      }
+
+      const submitData = {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         category: formData.category,
-        type: formData.type
-      });
+        type: formData.type,
+        image: imageUrls.length > 0 ? imageUrls[0] : null, // Use first image as primary
+        images: imageUrls, // Store all image URLs
+      };
+
+      console.log('📦 Sending product data:', submitData);
+      await onSave(submitData);
+    } catch (error) {
+      console.error('❌ Product creation failed:', error);
+      alert('Failed to create product. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -942,8 +1161,8 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <h3 className="text-lg font-semibold text-white">
             {product ? 'Edit Product' : 'Add New Product'}
@@ -987,6 +1206,91 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
             />
           </div>
 
+          {/* Product Images Section */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Product Images (Max 5)
+            </label>
+            
+            {/* Image Upload Area */}
+            <div className="border-2 border-dashed border-slate-600 rounded-lg p-4 text-center">
+              <input
+                type="file"
+                id="image-upload"
+                multiple
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                disabled={images.length + existingImages.length >= 5}
+              />
+              <label
+                htmlFor="image-upload"
+                className={`cursor-pointer ${
+                  images.length + existingImages.length >= 5
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:text-blue-400'
+                }`}
+              >
+                <div className="flex flex-col items-center space-y-2">
+                  <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <p className="text-sm text-slate-400">
+                    {images.length + existingImages.length >= 5
+                      ? 'Maximum 5 images reached'
+                      : 'Click to upload images or drag and drop'
+                    }
+                  </p>
+                  <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB each</p>
+                </div>
+              </label>
+            </div>
+
+            {/* Image Previews */}
+            {(imagePreviewUrls.length > 0 || existingImages.length > 0) && (
+              <div className="mt-4">
+                <p className="text-sm text-slate-400 mb-2">Selected Images:</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Existing Images */}
+                  {existingImages.map((imageUrl, index) => (
+                    <div key={`existing-${index}`} className="relative group">
+                      <img
+                        src={imageUrl}
+                        alt={`Existing ${index + 1}`}
+                        className="w-full h-20 object-cover rounded-md border border-slate-600"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index, true)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {/* New Images */}
+                  {imagePreviewUrls.map((url, index) => (
+                    <div key={`new-${index}`} className="relative group">
+                      <img
+                        src={url}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-20 object-cover rounded-md border border-slate-600"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index, false)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -1022,17 +1326,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, product, o
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Category
               </label>
+              {/* Liste dynamique des catégories, identique à Marketplace */}
+              {console.log('🔍 ProductModal: Current formData.category:', formData.category)}
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="General">General</option>
-                <option value="Technology">Technology</option>
-                <option value="Health">Health</option>
-                <option value="Education">Education</option>
-                <option value="Finance">Finance</option>
-                <option value="Entertainment">Entertainment</option>
+                {[
+                  "General", "SaaS", "Services", "Hardware", "Marketing", "Design", "Développement", "Éducation", "Santé", "Finance", "IA", "Marketplace", "E-commerce", "Mobilité", "Énergie", "Agriculture", "FoodTech", "LegalTech", "RH", "Tourisme", "Immobilier", "Transport", "Gaming", "Media", "Artisanat", "Mode", "Beauté", "Sport", "Bien-être", "Environnement", "Sécurité", "Logistique", "Assurance", "Crypto", "Blockchain", "Data", "Cloud", "IoT", "Robotics", "Autres"
+                ].map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
             </div>
 

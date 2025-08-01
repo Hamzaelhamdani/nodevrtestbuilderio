@@ -1,3 +1,64 @@
+// Get all products (all startups) for Marketplace
+export const getAllProducts = async (req: Request, res: Response) => {
+  try {
+    const products = await prisma.product.findMany({
+      include: { category: true, startup: true },
+      orderBy: { id: 'desc' }
+    });
+    
+    // Debug: Log raw products from database
+    console.log('🔍 Raw products from DB:', products.slice(0, 5).map(p => ({
+      id: p.id,
+      name: p.name,
+      categoryId: p.categoryId,
+      category: p.category,
+      categoryName: p.category?.name
+    })));
+    
+    const transformedProducts = products.map(product => ({
+      id: product.id,
+      name: product.name,
+      description: product.description || '',
+      price: parseFloat(product.price.toString()),
+      stock_quantity: product.inventory,
+      status: 'active',
+      category: product.category?.name || 'General',
+      created_at: new Date().toISOString(),
+      images: product.image ? [product.image] : [],
+      startup: product.startup ? { name: product.startup.name, logo: product.startup.logo } : null
+    }));
+    
+    console.log('🔍 Transformed products:', transformedProducts.slice(0, 5).map(p => ({
+      name: p.name,
+      category: p.category
+    })));
+    
+    res.json({ data: transformedProducts });
+  } catch (error) {
+    console.error('Error fetching all products:', error);
+    res.status(500).json({ error: 'Failed to fetch all products' });
+  }
+};
+
+// Get all categories for debugging
+export const getAllCategories = async (req: Request, res: Response) => {
+  try {
+    const categories = await prisma.category.findMany({
+      include: {
+        _count: {
+          select: { products: true }
+        }
+      }
+    });
+    
+    console.log('🔍 All categories in DB:', categories);
+    
+    res.json({ categories });
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+};
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 
@@ -45,16 +106,30 @@ export const getProducts = async (req: AuthenticatedRequest, res: Response) => {
     });
 
     // Transform products to match frontend expectations
-    const transformedProducts = products.map(product => ({
-      id: product.id,
-      name: product.name,
-      description: product.description || '',
-      price: parseFloat(product.price.toString()),
-      stock_quantity: product.inventory,
-      status: 'active', // Default status since it's not in schema
-      category: product.category?.name || 'General',
-      created_at: new Date().toISOString() // Mock created_at
-    }));
+    const transformedProducts = products.map(product => {
+      console.log('🔍 Raw product from DB:', { 
+        id: product.id, 
+        name: product.name, 
+        image: product.image 
+      });
+      
+      return {
+        id: product.id,
+        name: product.name,
+        description: product.description || '',
+        price: parseFloat(product.price.toString()),
+        stock_quantity: product.inventory,
+        status: 'active', // Default status since it's not in schema
+        category: product.category?.name || 'General',
+        created_at: new Date().toISOString(), // Mock created_at
+        images: product.image ? [product.image] : [] // Include the image URL
+      };
+    });
+
+    console.log('📦 Transformed products being sent to frontend:', transformedProducts.map(p => ({ 
+      name: p.name, 
+      images: p.images 
+    })));
 
     res.json({ data: transformedProducts });
   } catch (error) {
@@ -66,7 +141,11 @@ export const getProducts = async (req: AuthenticatedRequest, res: Response) => {
 export const createProduct = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { name, description, price, stock_quantity, category, type = 'Physical' } = req.body;
+    const { name, description, price, stock_quantity, category, type = 'Physical', image, images } = req.body;
+
+    console.log('📦 Creating product with data:', {
+      name, description, price, stock_quantity, category, type, image, images
+    });
 
     if (!name || !description || !price) {
       return res.status(400).json({ error: 'Name, description, and price are required' });
@@ -87,6 +166,20 @@ export const createProduct = async (req: AuthenticatedRequest, res: Response) =>
       return res.status(404).json({ error: 'Startup not found' });
     }
 
+    // Use the first image from images array or the single image field
+    const primaryImage = images && images.length > 0 ? images[0] : image;
+
+
+    // Find or create category if provided
+    let categoryId = undefined;
+    if (category) {
+      let cat = await prisma.category.findFirst({ where: { name: category } });
+      if (!cat) {
+        cat = await prisma.category.create({ data: { name: category } });
+      }
+      categoryId = cat.id;
+    }
+
     const product = await prisma.product.create({
       data: {
         name,
@@ -94,7 +187,9 @@ export const createProduct = async (req: AuthenticatedRequest, res: Response) =>
         price: parseFloat(price),
         inventory: parseInt(stock_quantity) || 0,
         type: type, // Physical, Digital, or Subscription
-        startupId: startup.id
+        image: primaryImage || null, // Save the primary image URL
+        startupId: startup.id,
+        ...(categoryId && { categoryId })
       }
     });
 
@@ -106,10 +201,12 @@ export const createProduct = async (req: AuthenticatedRequest, res: Response) =>
       price: parseFloat(product.price.toString()),
       stock_quantity: product.inventory,
       status: 'active',
-      category: 'General',
-      created_at: new Date().toISOString()
+      category: category || 'General',
+      created_at: new Date().toISOString(),
+      images: product.image ? [product.image] : [] // Include the image URL
     };
 
+    console.log('✅ Product created with image:', transformedProduct);
     res.status(201).json({ data: transformedProduct });
   } catch (error) {
     console.error('Error creating product:', error);
@@ -122,7 +219,7 @@ export const updateProduct = async (req: AuthenticatedRequest, res: Response) =>
   try {
     const userId = req.user?.id;
     const { id } = req.params;
-    const { name, description, price, stock_quantity, type } = req.body;
+    const { name, description, price, stock_quantity, type, image, images, category } = req.body;
 
     // Get startup - with development mode fallback
     let startup;
@@ -151,6 +248,22 @@ export const updateProduct = async (req: AuthenticatedRequest, res: Response) =>
       return res.status(404).json({ error: 'Product not found or access denied' });
     }
 
+    // Si images est fourni (tableau), on met à jour image (la principale) avec le premier élément ou null
+    let imageToSave = image;
+    if (Array.isArray(images)) {
+      imageToSave = images.length > 0 ? images[0] : null;
+    }
+
+    // Find or create category if provided
+    let categoryId = undefined;
+    if (category) {
+      let cat = await prisma.category.findFirst({ where: { name: category } });
+      if (!cat) {
+        cat = await prisma.category.create({ data: { name: category } });
+      }
+      categoryId = cat.id;
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: {
@@ -158,11 +271,19 @@ export const updateProduct = async (req: AuthenticatedRequest, res: Response) =>
         ...(description && { description }),
         ...(price && { price: parseFloat(price) }),
         ...(stock_quantity !== undefined && { inventory: parseInt(stock_quantity) }),
-        ...(type && { type })
+        ...(type && { type }),
+        image: imageToSave,
+        ...(categoryId && { categoryId })
       }
     });
 
     // Transform to match frontend expectations
+    // Récupère la catégorie à jour
+    let catName = 'General';
+    if (product.categoryId) {
+      const cat = await prisma.category.findUnique({ where: { id: product.categoryId } });
+      if (cat) catName = cat.name;
+    }
     const transformedProduct = {
       id: product.id,
       name: product.name,
@@ -170,7 +291,7 @@ export const updateProduct = async (req: AuthenticatedRequest, res: Response) =>
       price: parseFloat(product.price.toString()),
       stock_quantity: product.inventory,
       status: 'active',
-      category: 'General',
+      category: catName,
       created_at: new Date().toISOString()
     };
 
